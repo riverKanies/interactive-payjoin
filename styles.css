@@ -66,6 +66,7 @@
 .step-completed .step-text {
     text-decoration: line-through;
     color: #6b7280;
+    opacity: 50%;
 }
 
 .step-current {

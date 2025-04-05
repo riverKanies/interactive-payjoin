@@ -508,7 +508,7 @@ function updateStepIndicator(stepNumber) {
 }
 
 // Event handlers
-function handleGenerateBip21() {
+async function handleGenerateBip21() {
 
     // Get the values from the input fields
     state.ohttpRelay = elements.ohttpRelayInput.value;
@@ -520,7 +520,7 @@ function handleGenerateBip21() {
     const directoryId = directoryUrlParts[directoryUrlParts.length - 1];
     
     // Generate a v2 BIP21 URI with custom relay and directory
-    state.bip21Uri = createPjUri();
+    state.bip21Uri = await createPjUri();
     state.receiverStep = 'bip21_generated';
     updateStepIndicator(1);
     
@@ -553,6 +553,7 @@ function handleGenerateBip21() {
     const qrComponent = document.getElementById('payment-qr');
     if (qrComponent) {
         // Force a re-render by removing and re-adding the component
+        console.log(state.bip21Uri)
         const parent = qrComponent.parentNode;
         const oldQr = qrComponent;
         const newQr = oldQr.cloneNode(true);
@@ -1665,6 +1666,7 @@ function resetDemo() {
                 <bitcoin-qr
                     id="payment-qr"
                     class="qr-fade"
+                    unified="loading"
                     image="assets/images/payjoin.svg"
                     width="200"
                     height="200"
