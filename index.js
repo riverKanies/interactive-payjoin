@@ -258,7 +258,111 @@ async function senderStep1() {
     // const sendGetContext2 = context.process_response(result);
     // console.log(sendGetContext2);
 
-    return sendGetContext;
+    window.payjoinState.sendGetContext = sendGetContext;
+}
+
+async function receiverStep1() {
+    const {sendGetContext, receiver, receiverWallet} = window.payjoinState;
+    console.log("preparing for receiver to add inputTx", sendGetContext);
+
+    const {request, client_response} = await receiver.extract_req(ohttpRelay);
+    console.log("receiver extracted request", request);
+    console.log("receiver extracted client_response", client_response);
+
+    // get fallback psbt
+    console.log(request);
+    console.log(request.url);
+    console.log(request.content_type);
+    // console.log(request.body);
+    const response = await fetch(request.url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': request.content_type
+        },
+        body: request.body//psbtString
+    });
+    console.log('fallback response', response);
+    if (response.ok) {
+        console.log('fallback success');
+    } else {
+        return console.log('fallback failed', response);
+    }
+    const result = await response.bytes();
+    console.log(result);
+
+    const proposal = await receiver.process_res(result, client_response);
+    console.log(proposal);
+    const maybeInputsOwned = proposal.check_broadcast_suitability(null, true)
+    console.log(maybeInputsOwned);
+    const maybeInputsSeen = maybeInputsOwned.check_inputs_not_owned((input) => {
+        console.log(input);
+        // need to actually confirm the sender input is not owned by receiver
+        return false;
+    })
+    console.log(maybeInputsSeen);
+
+    const outputsUnknown = maybeInputsSeen.check_no_inputs_seen_before((outpoint) => {
+        console.log(outpoint);
+        // need to actually confirm the output hasn't been seen before
+        return false;
+    })
+    console.log(outputsUnknown);
+
+    const wantsOutputs = outputsUnknown.identify_receiver_outputs((outputScript) => {
+        console.log(outputScript);
+        // need to actually confirm the output is owned by receiver
+        return true;
+    })
+    console.log(wantsOutputs);
+
+    const wantsInputs = wantsOutputs.commit_outputs()
+    console.log(wantsInputs);
+
+    const inputs = receiverWallet.list_unspent().map((utxo) => createInputPairWithTx(utxo))
+    console.log(inputs);
+
+    const provisionalProposal = wantsInputs.contribute_inputs(inputs).commit_inputs()
+    console.log(provisionalProposal);
+
+    const payjoinProposal = provisionalProposal.finalize_proposal(
+        (psbt) => {
+            console.log('signing receiver inputs', psbt);
+            // final check
+            const psbtObj = Psbt.from_string(psbt)
+            console.log(psbtObj);
+            console.log(psbtObj.to_json());
+            console.log(receiverWallet)
+            try {
+                const options = new SignOptions()
+                console.log(options)
+                options.trust_witness_utxo = true
+                receiverWallet.sign_with_options(psbtObj, options);
+            } catch (e) {
+                console.error('sign err', e);
+            }
+            console.log('signed', psbtObj);
+            return psbtObj.toString()
+        },
+        BigInt(1),
+        BigInt(2)
+    )
+
+    let { request: finalRequest, client_response: finalContext } = payjoinProposal.extract_v2_req(ohttpRelay);
+    let responsePayjoin = await fetch(finalRequest.url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': finalRequest.content_type
+        },
+        body: finalRequest.body
+    });
+    console.log('finalized', responsePayjoin);
+    if (responsePayjoin.ok) {
+        console.log('final proposal submitted success');
+    } else {
+        throw('finalized submition failed', responsePayjoin);
+    }
+    const responseData = await responsePayjoin.bytes();
+    await payjoinProposal.process_res(responseData, finalContext);// what does this do?
 }
 
 
@@ -962,10 +1066,11 @@ function handleSendOriginalPsbt() {
     // Add highlight animation
     highlightElement(elements.payjoinDirectory);
     highlightElement(elements.dataFlowVisualization);
-    updateSenderStep(3, 'completed', 'Original PSBT sent.'); 
-    updateSenderStep(4, 'current', 'PSBT')
 
     senderStep1()
+
+    updateSenderStep(3, 'completed', 'Original PSBT sent.'); 
+    updateReceiverStep(2, 'current', 'Check Original PSBT');
 }
 
 function handleCheckOriginalPsbt() {
@@ -1011,6 +1116,10 @@ function handleCheckOriginalPsbt() {
     
     // Add highlight animation
     highlightElement(elements.receiverUI);
+
+    receiverStep1()
+
+    updateReceiverStep(3, 'completed', 'Check Payjoin PSBT');
 }
 
 function handleCreatePayjoinPsbt() {
