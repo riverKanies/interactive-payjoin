@@ -77,6 +77,14 @@
                         </div>
                     </div>
                     
+                    <!-- Sender UI Section -->
+                    <div id="sender-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
+                        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Sender's View</h3>
+                        <div class="sender-screen-container flex flex-col justify-center items-center h-full">
+                            <p class="text-gray-600 text-sm">Scan a Payjoin-enabled payment request to begin.</p>
+                        </div>
+                    </div>
+
                     <!-- Sender Process Steps -->
                     <div class="mb-4">
                         <h3 class="text-sm font-semibold mb-2 text-gray-700">Sender Steps:</h3>
@@ -124,16 +132,7 @@
                         <p>Waiting for the receiver to generate a payment request with Payjoin support.</p>
                     </div>
                     
-                    <!-- Sender UI Section -->
-                    <div id="sender-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
-                        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Sender's View</h3>
-                        <div class="sender-screen-container flex justify-center items-center h-full">
-                            <div class="text-center text-gray-400">
-                                <i class="fas fa-mobile-alt text-3xl mb-2"></i>
-                                <p>Wallet ready for payment</p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
 
@@ -156,6 +155,37 @@
                         </div>
                     </div>
                     
+                    <!-- Receiver UI Section -->
+                    <div id="receiver-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
+                        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
+                        <div class="receiver-screen-container flex flex-col justify-center items-center h-full">
+
+                            <!-- Initial state with just the button -->
+                            <button id="generate-bip21-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-colors duration-200">
+                                <i class="fas fa-qrcode mr-2"></i> Receive Payjoin
+                            </button>
+
+                            <!-- QR code section (initially hidden) -->
+                            <div id="qr-section" class="flex flex-col items-center space-y-4 hidden">
+                                <p class="text-sm text-gray-600">Scan to make payment</p>
+                                <bitcoin-qr
+                                    id="payment-qr"
+                                    class="qr-fade"
+                                    image="assets/images/payjoin.svg"
+                                    width="200"
+                                    height="200"
+                                    type="svg"
+                                    corners-square-color="#db6d99"
+                                    corners-dot-color="#db6d99"
+                                    corners-square-type="extra-rounded"
+                                    dots-type="classy-rounded"
+                                    dots-color="#db6d99"
+                                    image-embedded="true"
+                                ></bitcoin-qr>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Receiver Process Steps -->
                     <div class="mb-4">
                         <h3 class="text-sm font-semibold mb-2 text-gray-700">Receiver Steps:</h3>
@@ -192,49 +222,11 @@
                     </div>
                     
                     <!-- Current step description -->
+                    <!-- Current step description -->
                     <div id="receiver-step-description" class="mb-4 p-3 bg-purple-50 rounded-md text-sm text-purple-800">
                         <p>Generate a payment request with Payjoin v2 support to enable better privacy for Bitcoin transactions.</p>
                     </div>
-                    
-                    <!-- Receiver UI Section -->
-                    <div id="receiver-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
-                        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
-                        <div class="receiver-screen-container flex flex-col justify-center items-center h-full">
-                            <style>
-                                .qr-fade {
-                                    opacity: 0;
-                                    transition: opacity 0.5s ease-in-out;
-                                }
-                                .qr-fade.show {
-                                    opacity: 1;
-                                }
-                                .hidden-fade {
-                                    opacity: 0;
-                                    pointer-events: none;
-                                }
-                            </style>
-                            <!-- Initial state with just the button -->
-                            <button id="generate-bip21-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-colors duration-200">
-                                <i class="fas fa-qrcode mr-2"></i> Receive Payjoin
-                            </button>
-
-                            <!-- QR code section (initially hidden) -->
-                            <div id="qr-section" class="flex flex-col items-center space-y-4 hidden">
-                                <p class="text-sm text-gray-600">Scan to make payment</p>
-                                <bitcoin-qr
-                                    id="payment-qr"
-                                    class="qr-fade"
-                                    image="assets/images/payjoin.svg"
-                                    width="200"
-                                    height="200"
-                                    type="svg"
-                                    corners-square-color="#db6d99"
-                                    corners-dot-color="#db6d99"
-                                    corners-square-type="extra-rounded"
-                                    dots-type="classy-rounded"
-                                    dots-color="#db6d99"
-                                    image-embedded="true"
-                                ></bitcoin-qr>
+                                 
                             </div>
 
                         </div>

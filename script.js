@@ -470,6 +470,10 @@ function handleCreateOriginalPsbt() {
     // Add highlight animation
     highlightElement(elements.transactionVisualization);
     highlightElement(elements.senderUI);
+    
+    // Update step UI
+    updateSenderStep(2, 'completed', 'Original PSBT created successfully.');
+    updateSenderStep(3, 'current', 'Now send the PSBT to the Payjoin directory for the receiver to process.');
 }
 
 function handleSendOriginalPsbt() {

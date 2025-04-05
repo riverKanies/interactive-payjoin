@@ -103,6 +103,21 @@
     100% { background-color: transparent; }
 }
 
+/* QR Code Styles */
+.qr-fade {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.qr-fade.show {
+    opacity: 1;
+}
+
+.hidden-fade {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Mempool visualization */
 .mempool-block {
     border: 1px dashed #d1d5db;
