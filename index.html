@@ -59,7 +59,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Sender Side -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out">
+            <div id="sender-container" class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out sender-inactive">
                 <div class="bg-blue-500 p-4">
                     <h2 class="text-xl font-bold text-white text-center">Sender</h2>
                 </div>
@@ -77,6 +77,53 @@
                         </div>
                     </div>
                     
+                    <!-- Sender Process Steps -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-semibold mb-2 text-gray-700">Sender Steps:</h3>
+                        <div class="space-y-2 text-sm">
+                            <div id="sender-step-1" class="step flex items-center p-2 rounded-md">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">1</div>
+                                <span class="step-text">Scan BIP21 Request</span>
+                                <button id="scan-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0">
+                                    <i class="fas fa-qrcode mr-1"></i> Scan
+                                </button>
+                            </div>
+                            <div id="sender-step-2" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">2</div>
+                                <span class="step-text">Create Original PSBT</span>
+                                <button id="create-psbt-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-file-signature mr-1"></i> Create
+                                </button>
+                            </div>
+                            <div id="sender-step-3" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">3</div>
+                                <span class="step-text">Send PSBT</span>
+                                <button id="send-psbt-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-paper-plane mr-1"></i> Send
+                                </button>
+                            </div>
+                            <div id="sender-step-4" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">4</div>
+                                <span class="step-text">Sign Payjoin PSBT</span>
+                                <button id="sign-payjoin-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-signature mr-1"></i> Sign
+                                </button>
+                            </div>
+                            <div id="sender-step-5" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">5</div>
+                                <span class="step-text">Broadcast Transaction</span>
+                                <button id="broadcast-btn" class="ml-auto bg-green-500 hover:bg-green-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-broadcast-tower mr-1"></i> Broadcast
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current step description -->
+                    <div id="sender-step-description" class="mb-4 p-3 bg-blue-50 rounded-md text-sm text-blue-800 hidden">
+                        <p>Waiting for the receiver to generate a payment request with Payjoin support.</p>
+                    </div>
+                    
                     <!-- Sender UI Section -->
                     <div id="sender-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
                         <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Sender's View</h3>
@@ -87,29 +134,11 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="space-y-3">
-                        <button id="scan-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all">
-                            <i class="fas fa-qrcode mr-2"></i> Scan BIP21 Request
-                        </button>
-                        <button id="create-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
-                            <i class="fas fa-file-signature mr-2"></i> Create Original PSBT
-                        </button>
-                        <button id="send-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
-                            <i class="fas fa-paper-plane mr-2"></i> Send PSBT to Payjoin Directory
-                        </button>
-                        <button id="sign-payjoin-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
-                            <i class="fas fa-signature mr-2"></i> Sign Payjoin PSBT
-                        </button>
-                        <button id="broadcast-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-500 transition-all" disabled>
-                            <i class="fas fa-broadcast-tower mr-2"></i> Broadcast Transaction
-                        </button>
-                    </div>
                 </div>
             </div>
 
             <!-- Receiver Side -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out">
+            <div id="receiver-container" class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out receiver-active">
                 <div class="bg-purple-500 p-4">
                     <h2 class="text-xl font-bold text-white text-center">Receiver</h2>
                 </div>
@@ -125,6 +154,46 @@
                         <div id="receiver-status" class="p-4 bg-gray-50 rounded">
                             <p class="text-gray-600">Ready to generate payment request...</p>
                         </div>
+                    </div>
+                    
+                    <!-- Receiver Process Steps -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-semibold mb-2 text-gray-700">Receiver Steps:</h3>
+                        <div class="space-y-2 text-sm">
+                            <div id="receiver-step-1" class="step flex items-center p-2 rounded-md bg-purple-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center mr-2 text-xs font-bold">1</div>
+                                <span class="step-text">Generate Payment Request</span>
+                                <button id="generate-bip21-btn-step" class="ml-auto bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-2 rounded transition-all">
+                                    <i class="fas fa-qrcode mr-1"></i> Generate
+                                </button>
+                            </div>
+                            <div id="receiver-step-2" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">2</div>
+                                <span class="step-text">Check Original PSBT</span>
+                                <button id="check-psbt-btn" class="ml-auto bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-search mr-1"></i> Check
+                                </button>
+                            </div>
+                            <div id="receiver-step-3" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">3</div>
+                                <span class="step-text">Create Payjoin PSBT</span>
+                                <button id="create-payjoin-btn" class="ml-auto bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-edit mr-1"></i> Create
+                                </button>
+                            </div>
+                            <div id="receiver-step-4" class="step flex items-center p-2 rounded-md opacity-50">
+                                <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">4</div>
+                                <span class="step-text">Respond with Payjoin</span>
+                                <button id="respond-btn" class="ml-auto bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0" disabled>
+                                    <i class="fas fa-reply mr-1"></i> Respond
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current step description -->
+                    <div id="receiver-step-description" class="mb-4 p-3 bg-purple-50 rounded-md text-sm text-purple-800">
+                        <p>Generate a payment request with Payjoin v2 support to enable better privacy for Bitcoin transactions.</p>
                     </div>
                     
                     <!-- Receiver UI Section -->
@@ -184,21 +253,6 @@
                                 <input type="text" id="payjoin-directory" class="w-full p-2 text-sm border border-gray-300 rounded" value="https://directory.payjoin.org" placeholder="https://directory.payjoin.org">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <button id="generate-bip21-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all">
-                            <i class="fas fa-qrcode mr-2"></i> Generate BIP21 Request
-                        </button>
-                        <button id="check-psbt-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
-                            <i class="fas fa-search mr-2"></i> Check Original PSBT
-                        </button>
-                        <button id="create-payjoin-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
-                            <i class="fas fa-edit mr-2"></i> Create Payjoin PSBT
-                        </button>
-                        <button id="respond-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
-                            <i class="fas fa-reply mr-2"></i> Respond with Payjoin PSBT
-                        </button>
                     </div>
                 </div>
             </div>

@@ -49,6 +49,39 @@
     border: 1px solid #93c5fd;
 }
 
+/* Step and participant highlighting */
+.sender-active {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.receiver-active {
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.5);
+}
+
+.sender-inactive, .receiver-inactive {
+    opacity: 0.85;
+}
+
+/* Step styling */
+.step-completed .step-text {
+    text-decoration: line-through;
+    color: #6b7280;
+}
+
+.step-current {
+    background-color: #f3f4f6;
+}
+
+.step-current .step-number {
+    background-color: currentColor;
+    color: white;
+}
+
+/* Button animations */
+.step button {
+    transition: opacity 0.3s ease-in-out;
+}
+
 .tx-output {
     background-color: #dcfce7;
     border: 1px solid #86efac;

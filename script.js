@@ -92,6 +92,13 @@ function init() {
     elements.broadcastBtn.addEventListener('click', handleBroadcastTx);
     elements.resetBtn.addEventListener('click', resetDemo);
     
+    // Add event listeners for step buttons
+    document.getElementById('generate-bip21-btn-step').addEventListener('click', handleGenerateBip21);
+    
+    // Set initial active participant
+    setActiveParticipant('receiver');
+    updateReceiverStep(1, 'current', 'Generate a payment request with Payjoin v2 support to enable better privacy for Bitcoin transactions.');
+    
     // Initialize reset button text
     elements.resetBtn.innerHTML = '<i class="fas fa-redo-alt mr-2"></i>Reset Demo';
     
@@ -180,6 +187,13 @@ function handleGenerateBip21() {
     // Hide the generate button with fade
     generateButton.style.transition = 'opacity 0.3s ease-in-out';
     generateButton.classList.add('hidden-fade');
+    
+    // Update step UI
+    updateReceiverStep(1, 'completed', 'Payment request generated. Now the sender can scan the QR code.');
+    
+    // Switch active participant to sender
+    setActiveParticipant('sender');
+    updateSenderStep(1, 'current', 'Scan the QR code to get payment details with Payjoin v2 support.');
 
     // Update the bitcoin-qr component with the new BIP21 URI
     const qrComponent = document.getElementById('payment-qr');
@@ -280,7 +294,6 @@ function handleScanBip21() {
     state.senderStep = 'bip21_scanned';
     updateStepIndicator(2);
 
-
     // Update UI
     updateSenderStatus('BIP21 payment request scanned. Ready to create PSBT.');
     
@@ -343,6 +356,10 @@ function handleScanBip21() {
     // Add highlight animation to sender panel
     highlightElement(elements.senderUI);
     highlightElement(elements.dataFlowVisualization);
+    
+    // Update step UI
+    updateSenderStep(1, 'completed', 'Payment request scanned successfully.');
+    updateSenderStep(2, 'current', 'Now create an original PSBT (Partially Signed Bitcoin Transaction) to start the payment process.');
 }
 
 function handleCreateOriginalPsbt() {
@@ -1098,6 +1115,98 @@ function updateSenderStatus(message) {
 
 function updateReceiverStatus(message) {
     elements.receiverStatus.innerHTML = `<p class="text-gray-600">${message}</p>`;
+}
+
+// New helper functions for step UI
+function setActiveParticipant(participant) {
+    // Reset both to inactive
+    document.getElementById('sender-container').classList.remove('sender-active');
+    document.getElementById('receiver-container').classList.remove('receiver-active');
+    document.getElementById('sender-container').classList.add('sender-inactive');
+    document.getElementById('receiver-container').classList.add('receiver-inactive');
+    
+    // Set the active one
+    if (participant === 'sender') {
+        document.getElementById('sender-container').classList.remove('sender-inactive');
+        document.getElementById('sender-container').classList.add('sender-active');
+        document.getElementById('sender-step-description').classList.remove('hidden');
+        document.getElementById('receiver-step-description').classList.add('hidden');
+    } else if (participant === 'receiver') {
+        document.getElementById('receiver-container').classList.remove('receiver-inactive');
+        document.getElementById('receiver-container').classList.add('receiver-active');
+        document.getElementById('receiver-step-description').classList.remove('hidden');
+        document.getElementById('sender-step-description').classList.add('hidden');
+    }
+}
+
+function updateSenderStep(stepNumber, status, description) {
+    // Reset all steps
+    for (let i = 1; i <= 5; i++) {
+        const stepElement = document.getElementById(`sender-step-${i}`);
+        stepElement.classList.remove('step-current', 'step-completed');
+        stepElement.classList.add('opacity-50');
+        
+        const buttonElement = stepElement.querySelector('button');
+        if (buttonElement) {
+            buttonElement.classList.add('opacity-0');
+            buttonElement.disabled = true;
+        }
+    }
+    
+    // Update the current step
+    const currentStep = document.getElementById(`sender-step-${stepNumber}`);
+    currentStep.classList.remove('opacity-50');
+    
+    if (status === 'current') {
+        currentStep.classList.add('step-current');
+        const buttonElement = currentStep.querySelector('button');
+        if (buttonElement) {
+            buttonElement.classList.remove('opacity-0');
+            buttonElement.disabled = false;
+        }
+    } else if (status === 'completed') {
+        currentStep.classList.add('step-completed');
+    }
+    
+    // Update description if provided
+    if (description) {
+        document.getElementById('sender-step-description').innerHTML = `<p>${description}</p>`;
+    }
+}
+
+function updateReceiverStep(stepNumber, status, description) {
+    // Reset all steps
+    for (let i = 1; i <= 4; i++) {
+        const stepElement = document.getElementById(`receiver-step-${i}`);
+        stepElement.classList.remove('step-current', 'step-completed');
+        stepElement.classList.add('opacity-50');
+        
+        const buttonElement = stepElement.querySelector('button');
+        if (buttonElement) {
+            buttonElement.classList.add('opacity-0');
+            buttonElement.disabled = true;
+        }
+    }
+    
+    // Update the current step
+    const currentStep = document.getElementById(`receiver-step-${stepNumber}`);
+    currentStep.classList.remove('opacity-50');
+    
+    if (status === 'current') {
+        currentStep.classList.add('step-current');
+        const buttonElement = currentStep.querySelector('button');
+        if (buttonElement) {
+            buttonElement.classList.remove('opacity-0');
+            buttonElement.disabled = false;
+        }
+    } else if (status === 'completed') {
+        currentStep.classList.add('step-completed');
+    }
+    
+    // Update description if provided
+    if (description) {
+        document.getElementById('receiver-step-description').innerHTML = `<p>${description}</p>`;
+    }
 }
 
 function truncatePsbt(psbt) {
