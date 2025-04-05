@@ -32,6 +32,10 @@ const elements = {
     // Sender elements
     senderStatus: document.getElementById('sender-status'),
     senderUI: document.getElementById('sender-ui'),
+    
+    // Receiver buttons
+    createPayjoinBtn: document.getElementById('create-payjoin-btn'),
+    respondBtn: document.getElementById('respond-btn'),
     scanBtn: document.getElementById('scan-btn'),
     createPsbtBtn: document.getElementById('create-psbt-btn'),
     sendPsbtBtn: document.getElementById('send-psbt-btn'),
@@ -631,7 +635,10 @@ function handleCheckOriginalPsbt() {
     
     // Enable/disable appropriate buttons
     elements.checkPsbtBtn.disabled = true;
-    elements.createPayjoinBtn.disabled = false;
+    elements.createPayjoinBtn.disabled = true;
+    elements.createPayjoinBtn.classList.add('opacity-0');
+    elements.respondBtn.disabled = false;
+    elements.respondBtn.classList.remove('opacity-0');
     
     // Add highlight animation
     highlightElement(elements.receiverUI);
@@ -641,9 +648,14 @@ function handleCreatePayjoinPsbt() {
     // Update state
     state.payjoinPsbt = mockData.payjoinPsbt;
     state.receiverStep = 'payjoin_created';
+    updateStepIndicator(4);
     
     // Update UI
     updateReceiverStatus('Payjoin PSBT created. Ready to respond to sender.');
+    
+    // Update step UI
+    updateReceiverStep(3, 'completed', 'Payjoin PSBT created successfully.');
+    updateReceiverStep(4, 'current', 'Ready to send the Payjoin PSBT back to the sender.');
     
     // Show the Payjoin PSBT in the code container for easy copying
     elements.codeContainers.payjoinPsbtCode.textContent = state.payjoinPsbt;
