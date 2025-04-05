@@ -1270,12 +1270,6 @@ function resetDemo() {
     const copyButtons = document.querySelectorAll('.copy-button');
     copyButtons.forEach(button => button.remove());
     
-    elements.receiverUI.innerHTML = `
-        <div class="text-center text-gray-400">
-            <i class="fas fa-store text-3xl mb-2"></i>
-            <p>Ready to receive payment</p>
-        </div>
-    `;
     
     // Reset visualization areas
     elements.dataFlowVisualization.innerHTML = `
