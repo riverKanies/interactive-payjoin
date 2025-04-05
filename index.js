@@ -177,10 +177,44 @@ async function senderStep2(senderWallet, sendGetContext) {
     // https://mutinynet.com/tx/f90380bdb2284a7586a386017177257d2454aab100f2a21d5ed2a6e3baf48f6e
 }
 
-async function senderStep1() {
-    const pjUriString = localStorage.getItem("pjUriString");
-    const psbtString = localStorage.getItem("psbtString");
+async function createPjUri() {
+    const {receiverWallet} = window.payjoinState
+    const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
+    const address = addressInfo.address.toString()
 
+    const receiver = Receiver.new(
+        address,
+        network,
+        payjoinDirectory,
+        ohttpKeys,
+        ohttpRelay
+    );
+    
+    // got the pj_uri for the sender to use:
+    const pjUriString = receiver.pj_uri().as_string
+
+    window.payjoinState.receiver = receiver;
+    window.payjoinState.pjUriString = pjUriString;
+
+    return pjUriString;
+}
+
+async function createOriginalPsbt() {
+    const {senderWallet, pjUriString, receiver} = window.payjoinState;
+    // TODO: Make variables
+    console.log({pjUriString, network})
+    const psbt = senderWallet.build_tx()
+        .fee_rate(new FeeRate(BigInt(4)))
+        .add_recipient(new Recipient(Address.from_string(receiver.pj_uri().address.toString(), network),
+            Amount.from_sat(BigInt(8000))))
+        .finish();
+    const psbtString = psbt.toString();
+    window.payjoinState.psbtString = psbtString;
+    return psbtString;
+}
+
+async function senderStep1() {
+    const {pjUriString, psbtString} = window.payjoinState;
     const bip21Uri = Uri.parse(pjUriString);
     console.log(bip21Uri.address());
     const pjUri = bip21Uri.check_pj_supported();
@@ -225,42 +259,6 @@ async function senderStep1() {
     // console.log(sendGetContext2);
 
     return sendGetContext;
-}
-
-async function createPjUri() {
-    const {receiverWallet} = window.payjoinState
-    const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
-    const address = addressInfo.address.toString()
-
-    const receiver = Receiver.new(
-        address,
-        network,
-        payjoinDirectory,
-        ohttpKeys,
-        ohttpRelay
-    );
-    
-    // got the pj_uri for the sender to use:
-    const pjUriString = receiver.pj_uri().as_string
-
-    window.payjoinState.receiver = receiver;
-    window.payjoinState.pjUriString = pjUriString;
-
-    return pjUriString;
-}
-
-async function createOriginalPsbt() {
-    const {senderWallet, pjUriString, receiver} = window.payjoinState;
-    // TODO: Make variables
-    console.log({pjUriString, network})
-    const psbt = senderWallet.build_tx()
-        .fee_rate(new FeeRate(BigInt(4)))
-        .add_recipient(new Recipient(Address.from_string(receiver.pj_uri().address.toString(), network),
-            Amount.from_sat(BigInt(8000))))
-        .finish();
-    const psbtString = psbt.toString();
-    window.payjoinState.psbtString = psbtString;
-    return psbtString;
 }
 
 
@@ -966,6 +964,8 @@ function handleSendOriginalPsbt() {
     highlightElement(elements.dataFlowVisualization);
     updateSenderStep(3, 'completed', 'Original PSBT sent.'); 
     updateSenderStep(4, 'current', 'PSBT')
+
+    senderStep1()
 }
 
 function handleCheckOriginalPsbt() {
