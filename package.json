@@ -1,0 +1,15 @@
+{
+  "name": "pj-wasm-demo",
+  "version": "1.0.0",
+  "description": "An interactive web demonstration of the Bitcoin PayJoin protocol, showing how it enhances transaction privacy by breaking common blockchain analysis heuristics.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitcoin-qr": "^1.4.1"
+  }
+}

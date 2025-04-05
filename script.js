@@ -179,17 +179,21 @@ function handleGenerateBip21() {
                     Payjoin v2 Request Generated
                 </span>
             </div>
-            <div class="qr-container mx-auto mb-2">
-                <div class="border-4 border-black h-32 w-32 mx-auto grid grid-cols-5 grid-rows-5 gap-1 p-1">
-                    <!-- Simplified QR code representation -->
-                    <div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div>
-                    <div class="bg-black"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-black"></div>
-                    <div class="bg-black"></div><div class="bg-white"></div><div class="bg-black"></div><div class="bg-white"></div><div class="bg-black"></div>
-                    <div class="bg-black"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-white"></div><div class="bg-black"></div>
-                    <div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-black"></div>
-                </div>
+            <div class="text-center">
+                <bitcoin-qr
+                    id="payment-qr"
+                    address="${state.bip21Uri}"
+                    label="Payjoin Payment"
+                    image="https://bitcoin-qr.blu.cx/images/payjoin.png"
+                    image-size="0.25"
+                    background="#f3f4f6"
+                    foreground="#6366f1"
+                    size="200"
+                    style="margin: 0 auto;"
+                ></bitcoin-qr>
+                <p class="mt-4 text-sm text-gray-600">Scan to make payment</p>
             </div>
-            <div class="text-center text-sm">
+            <div class="text-center text-sm mt-4">
                 <p class="mb-1 font-semibold">Request details:</p>
                 <p class="text-gray-600">Amount: <span class="font-mono">${mockData.amount}</span></p>
                 <p class="text-gray-600">Address: <span class="font-mono text-xs">${mockData.receiverAddress.substring(0, 10)}...</span></p>

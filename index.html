@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Font Awesome for copy icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="module" src="node_modules/bitcoin-qr/dist/bitcoin-qr/bitcoin-qr.esm.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <header class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
@@ -130,9 +131,20 @@
                     <div id="receiver-ui" class="mb-6 border rounded-lg p-4 bg-gray-50 min-h-[12rem] fade-in">
                         <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
                         <div class="receiver-screen-container flex justify-center items-center h-full">
-                            <div class="text-center text-gray-400">
-                                <i class="fas fa-store text-3xl mb-2"></i>
-                                <p>Ready to receive payment</p>
+                            <div class="text-center">
+                                <bitcoin-qr
+                                    id="payment-qr"
+                                    address=""
+                                    amount="0.01"
+                                    label="Payjoin Payment"
+                                    image="https://bitcoin-qr.blu.cx/images/payjoin.png"
+                                    image-size="0.25"
+                                    background="#f3f4f6"
+                                    foreground="#6366f1"
+                                    size="200"
+                                    style="margin: 0 auto;"
+                                ></bitcoin-qr>
+                                <p class="mt-4 text-gray-600">Scan to make payment</p>
                             </div>
                         </div>
                     </div>
