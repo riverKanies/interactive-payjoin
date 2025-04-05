@@ -26,6 +26,9 @@ const elements = {
         step5: document.getElementById('step-5')
     },
     
+    // Explanation element
+    stepExplanation: document.getElementById('step-explanation'),
+    
     // Sender elements
     senderStatus: document.getElementById('sender-status'),
     senderUI: document.getElementById('sender-ui'),
@@ -1143,6 +1146,15 @@ function setActiveParticipant(participant) {
     }
 }
 
+// Update the central step explanation panel
+function updateStepExplanation(stepNumber, explanation) {
+    if (elements.stepExplanation && explanation) {
+        elements.stepExplanation.innerHTML = `<p>${explanation}</p>`;
+        // Update the main step indicator if needed
+        updateStepIndicator(stepNumber);
+    }
+}
+
 function updateSenderStep(stepNumber, status, description) {
     // Reset all steps
     for (let i = 1; i <= 5; i++) {
@@ -1175,6 +1187,8 @@ function updateSenderStep(stepNumber, status, description) {
     // Update description if provided
     if (description) {
         document.getElementById('sender-step-description').innerHTML = `<p>${description}</p>`;
+        // Also update the main explanation
+        updateStepExplanation(stepNumber, description);
     }
 }
 
@@ -1210,6 +1224,8 @@ function updateReceiverStep(stepNumber, status, description) {
     // Update description if provided
     if (description) {
         document.getElementById('receiver-step-description').innerHTML = `<p>${description}</p>`;
+        // Also update the main explanation
+        updateStepExplanation(stepNumber, description);
     }
 }
 

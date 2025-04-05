@@ -69,12 +69,26 @@
 }
 
 .step-current {
-    background-color: #f3f4f6;
+    background-color: #f3f4f6 !important;
+    opacity: 1 !important;
 }
 
 .step-current .step-number {
-    background-color: currentColor;
-    color: white;
+    background-color: #2563eb !important;
+    color: white !important;
+    opacity: 1 !important;
+}
+
+/* For receiver */
+.receiver-container .step-current .step-number {
+    background-color: #8b5cf6 !important;
+}
+
+/* Ensure step numbers are always visible */
+.step-number {
+    opacity: 1 !important;
+    z-index: 10;
+    font-weight: bold !important;
 }
 
 /* Button animations */
