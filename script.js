@@ -170,39 +170,48 @@ function handleGenerateBip21() {
     elements.codeContainers.bip21Code.textContent = state.bip21Uri;
     elements.codeContainers.bip21Container.classList.remove('hidden');
     
-    // Update receiver UI with payment request details
-    elements.receiverUI.innerHTML = `
-        <h3 class="text-center text-sm font-semibold mb-3 text-gray-700">Receiver's View</h3>
-        <div class="bg-gray-100 p-3 rounded-lg">
-            <div class="text-center mb-3">
-                <span class="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                    Payjoin v2 Request Generated
-                </span>
-            </div>
-            <div class="text-center">
-                <bitcoin-qr
-                    id="payment-qr"
-                    address="${state.bip21Uri}"
-                    label="Payjoin Payment"
-                    image="https://bitcoin-qr.blu.cx/images/payjoin.png"
-                    image-size="0.25"
-                    background="#f3f4f6"
-                    foreground="#6366f1"
-                    size="200"
-                    style="margin: 0 auto;"
-                ></bitcoin-qr>
-                <p class="mt-4 text-sm text-gray-600">Scan to make payment</p>
-            </div>
-            <div class="text-center text-sm mt-4">
-                <p class="mb-1 font-semibold">Request details:</p>
-                <p class="text-gray-600">Amount: <span class="font-mono">${mockData.amount}</span></p>
-                <p class="text-gray-600">Address: <span class="font-mono text-xs">${mockData.receiverAddress.substring(0, 10)}...</span></p>
-                <p class="text-gray-600">Payjoin: <span class="text-green-600">v2 Enabled</span></p>
-                <p class="text-gray-600">OHTTP Relay: <span class="font-mono text-xs">${state.ohttpRelay.substring(0, 18)}...</span></p>
-                <p class="text-gray-600">Directory: <span class="font-mono text-xs">${state.payjoinDirectory.substring(0, 18)}...</span></p>
-            </div>
+    // Update the bitcoin-qr component with the new BIP21 URI
+    const qrComponent = document.getElementById('payment-qr');
+    if (qrComponent) {
+        // Force a re-render by removing and re-adding the component
+        const parent = qrComponent.parentNode;
+        const oldQr = qrComponent;
+        const newQr = oldQr.cloneNode(true);
+        newQr.setAttribute('unified', state.bip21Uri);
+        
+        // Start with opacity 0
+        newQr.classList.remove('show');
+        parent.replaceChild(newQr, oldQr);
+        
+        // Trigger reflow and add show class for animation
+        newQr.offsetHeight;
+        newQr.classList.add('show');
+    }
+
+    // Update status and show request details
+    const requestDetails = document.createElement('div');
+    requestDetails.className = 'mt-8 text-center';
+    requestDetails.innerHTML = `
+        <div class="bg-purple-100 text-purple-800 text-xs font-semibold rounded px-2 py-1 inline-block mb-4">
+            Payjoin v2 Request Generated
+        </div>
+        <div class="text-sm space-y-2">
+            <p class="font-semibold">Request details:</p>
+            <p class="text-gray-600">Amount: <span class="font-mono">${mockData.amount}</span></p>
+            <p class="text-gray-600">Address: <span class="font-mono text-xs">${mockData.receiverAddress.substring(0, 10)}...</span></p>
+            <p class="text-gray-600">Payjoin: <span class="text-green-600">v2 Enabled</span></p>
+            <p class="text-gray-600">OHTTP Relay: <span class="font-mono text-xs">${state.ohttpRelay.substring(0, 18)}...</span></p>
+            <p class="text-gray-600">Directory: <span class="font-mono text-xs">${state.payjoinDirectory.substring(0, 18)}...</span></p>
         </div>
     `;
+
+    // Clear any existing request details and append new ones
+    const existingDetails = elements.receiverUI.querySelector('.request-details');
+    if (existingDetails) {
+        existingDetails.remove();
+    }
+    requestDetails.classList.add('request-details');
+    elements.receiverUI.appendChild(requestDetails);
     
     // Update data flow visualization
     elements.dataFlowVisualization.innerHTML = `
