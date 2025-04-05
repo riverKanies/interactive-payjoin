@@ -227,6 +227,25 @@ async function senderStep1() {
     return sendGetContext;
 }
 
+async function createPjUri() {
+    const {receiverWallet} = window.payjoinState
+    const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
+    const address = addressInfo.address.toString()
+
+    const receiver = Receiver.new(
+        address,
+        network,
+        payjoinDirectory,
+        ohttpKeys,
+        ohttpRelay
+    );
+    // console.log(receiver.to_json());
+    // got the pj_uri for the sender to use:
+    const pjUriString = receiver.pj_uri().as_string
+    console.log({pjUriString})
+    return pjUriString;
+}
+
 
 async function createAndSavePjUriAndPsbt() {
 
@@ -306,9 +325,13 @@ async function initSenderAndReceiverWallets() {
     return {senderWallet, receiverWallet};
 }
 
+
 initSenderAndReceiverWallets().then(({receiverWallet, senderWallet}) => {
     document.getElementById('receiver-balance').textContent = receiverWallet.balance.confirmed.to_sat();
     document.getElementById('sender-balance').textContent = senderWallet.balance.confirmed.to_sat();
+
+    window.payjoinState.receiverWallet = receiverWallet
+    window.payjoinState.senderWallet = senderWallet
 })
 
 
@@ -419,9 +442,10 @@ function init() {
     elements.signPayjoinBtn.addEventListener('click', handleSignPayjoinPsbt);
     elements.broadcastBtn.addEventListener('click', handleBroadcastTx);
     elements.resetBtn.addEventListener('click', resetDemo);
+
+    window.payjoinState = {}
     
     // Add event listeners for step buttons
-    document.getElementById('generate-bip21-btn-step').addEventListener('click', handleGenerateBip21);
     
     // Set initial active participant
     setActiveParticipant('receiver');
@@ -485,16 +509,18 @@ function updateStepIndicator(stepNumber) {
 
 // Event handlers
 function handleGenerateBip21() {
+
     // Get the values from the input fields
     state.ohttpRelay = elements.ohttpRelayInput.value;
     state.payjoinDirectory = elements.payjoinDirectoryInput.value;
     
+
     // Extract directory ID from the URL (assuming last path component is the ID)
     const directoryUrlParts = state.payjoinDirectory.split('/');
     const directoryId = directoryUrlParts[directoryUrlParts.length - 1];
     
     // Generate a v2 BIP21 URI with custom relay and directory
-    state.bip21Uri = `bitcoin:${mockData.receiverAddress}?amount=0.01&pj=v2&pjos=${encodeURIComponent(state.ohttpRelay)}&pjpd=${encodeURIComponent(state.payjoinDirectory)}`;  
+    state.bip21Uri = createPjUri();
     state.receiverStep = 'bip21_generated';
     updateStepIndicator(1);
     
@@ -594,7 +620,7 @@ function handleGenerateBip21() {
         <div class="p-3">
             <p class="font-semibold text-gray-700 mb-2">BIP21 Payment Request:</p>
             <div class="bg-gray-100 p-2 rounded font-mono text-xs overflow-x-auto">
-                ${state.bip21Uri.replace('bitcoin:', '<span class="text-green-600">bitcoin:</span>').replace('amount=0.01', '<span class="text-blue-600">amount=0.01</span>').replace('pj=https://', '<span class="text-purple-600">pj=https://</span>')}
+                ${state.bip21Uri}
             </div>
         </div>
     `;
@@ -1659,7 +1685,7 @@ function resetDemo() {
     
     // Reset button states and reattach event listeners
     elements.generateBip21Btn = document.getElementById('generate-bip21-btn');
-    elements.generateBip21Btn.addEventListener('click', handleGenerateBip21);
+    elements.generateBip21Btn.addEventListener('click', () => console.log('asdf'));
     elements.scanBtn.disabled = true;
     elements.createPsbtBtn.disabled = true;
     elements.sendPsbtBtn.disabled = true;
@@ -1773,4 +1799,5 @@ function resetDemo() {
 }
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', init);
+// document.addEventListener('DOMContentLoaded', init);
+init()
