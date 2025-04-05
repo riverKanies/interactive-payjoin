@@ -1491,12 +1491,27 @@ function updateStepExplanation(stepNumber, explanation) {
 }
 
 function updateSenderStep(stepNumber, status, description) {
-    // Reset all steps
+    // Process each step
     for (let i = 1; i <= 5; i++) {
         const stepElement = document.getElementById(`sender-step-${i}`);
-        stepElement.classList.remove('step-current', 'step-completed');
-        stepElement.classList.add('opacity-50');
         
+        // First clear current status for all steps
+        stepElement.classList.remove('step-current');
+        
+        if (i < stepNumber) {
+            // Previous steps should be marked as completed
+            stepElement.classList.remove('opacity-50');
+            stepElement.classList.add('step-completed');
+        } else if (i > stepNumber) {
+            // Future steps should be marked as inactive
+            stepElement.classList.remove('step-completed');
+            stepElement.classList.add('opacity-50');
+        } else {
+            // Current step
+            stepElement.classList.remove('opacity-50');
+        }
+        
+        // Hide all buttons initially
         const buttonElement = stepElement.querySelector('button');
         if (buttonElement) {
             buttonElement.classList.add('opacity-0');
@@ -1528,12 +1543,27 @@ function updateSenderStep(stepNumber, status, description) {
 }
 
 function updateReceiverStep(stepNumber, status, description) {
-    // Reset all steps
+    // Process each step
     for (let i = 1; i <= 4; i++) {
         const stepElement = document.getElementById(`receiver-step-${i}`);
-        stepElement.classList.remove('step-current', 'step-completed');
-        stepElement.classList.add('opacity-50');
         
+        // First clear current status for all steps
+        stepElement.classList.remove('step-current');
+        
+        if (i < stepNumber) {
+            // Previous steps should be marked as completed
+            stepElement.classList.remove('opacity-50');
+            stepElement.classList.add('step-completed');
+        } else if (i > stepNumber) {
+            // Future steps should be marked as inactive
+            stepElement.classList.remove('step-completed');
+            stepElement.classList.add('opacity-50');
+        } else {
+            // Current step
+            stepElement.classList.remove('opacity-50');
+        }
+        
+        // Hide all buttons initially
         const buttonElement = stepElement.querySelector('button');
         if (buttonElement) {
             buttonElement.classList.add('opacity-0');
