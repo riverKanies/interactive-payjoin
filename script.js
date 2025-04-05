@@ -170,6 +170,17 @@ function handleGenerateBip21() {
     elements.codeContainers.bip21Code.textContent = state.bip21Uri;
     elements.codeContainers.bip21Container.classList.remove('hidden');
     
+    // Show QR section and hide generate button
+    const qrSection = document.getElementById('qr-section');
+    const generateButton = document.getElementById('generate-bip21-btn');
+    
+    // Show the QR section
+    qrSection.classList.remove('hidden');
+    
+    // Hide the generate button with fade
+    generateButton.style.transition = 'opacity 0.3s ease-in-out';
+    generateButton.classList.add('hidden-fade');
+
     // Update the bitcoin-qr component with the new BIP21 URI
     const qrComponent = document.getElementById('payment-qr');
     if (qrComponent) {
@@ -1139,10 +1150,42 @@ function resetDemo() {
     // Reset receiver UI
     elements.receiverUI.innerHTML = `
         <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
-        <div class="receiver-screen-container flex justify-center items-center h-full">
-            <div class="text-center text-gray-400">
-                <i class="fas fa-store text-3xl mb-2"></i>
-                <p>Ready to receive payment</p>
+        <div class="receiver-screen-container flex flex-col justify-center items-center h-full">
+            <style>
+                .qr-fade {
+                    opacity: 0;
+                    transition: opacity 0.5s ease-in-out;
+                }
+                .qr-fade.show {
+                    opacity: 1;
+                }
+                .hidden-fade {
+                    opacity: 0;
+                    pointer-events: none;
+                }
+            </style>
+            <!-- Initial state with just the button -->
+            <button id="generate-bip21-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-colors duration-200">
+                <i class="fas fa-qrcode mr-2"></i> Receive Payjoin
+            </button>
+
+            <!-- QR code section (initially hidden) -->
+            <div id="qr-section" class="flex flex-col items-center space-y-4 hidden">
+                <p class="text-sm text-gray-600">Scan to make payment</p>
+                <bitcoin-qr
+                    id="payment-qr"
+                    class="qr-fade"
+                    image="assets/images/payjoin.svg"
+                    width="200"
+                    height="200"
+                    type="svg"
+                    corners-square-color="#db6d99"
+                    corners-dot-color="#db6d99"
+                    corners-square-type="extra-rounded"
+                    dots-type="classy-rounded"
+                    dots-color="#db6d99"
+                    image-embedded="true"
+                ></bitcoin-qr>
             </div>
         </div>
     `;
@@ -1150,8 +1193,9 @@ function resetDemo() {
     // Reset step indicators
     updateStepIndicator(1);
     
-    // Reset button states
-    elements.generateBip21Btn.disabled = false;
+    // Reset button states and reattach event listeners
+    elements.generateBip21Btn = document.getElementById('generate-bip21-btn');
+    elements.generateBip21Btn.addEventListener('click', handleGenerateBip21);
     elements.scanBtn.disabled = true;
     elements.createPsbtBtn.disabled = true;
     elements.sendPsbtBtn.disabled = true;
