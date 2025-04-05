@@ -12,17 +12,23 @@
 <body class="bg-gray-100 min-h-screen font-sans">
     <header class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
         <div class="container mx-auto">
-            <h1 class="text-3xl font-bold text-center">PayJoin Interactive Demo</h1>
-            <p class="text-center mt-2">Experience how PayJoin enhances Bitcoin transaction privacy</p>
+            <h1 class="text-3xl font-bold text-center">Payjoin Interactive Demo</h1>
+            <p class="text-center mt-2">Experience how Payjoin enhances Bitcoin transaction privacy</p>
         </div>
     </header>
 
     <main class="container mx-auto p-4 mt-8">
+        <!-- Reset Button -->
+        <div class="flex justify-end mb-4">
+            <button id="reset-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded inline-flex items-center transition-colors duration-200">
+                <i class="fas fa-redo-alt mr-2"></i>Reset Demo
+            </button>
+        </div>
         <!-- Step Indicator -->
         <div class="mb-8">
             <div class="flex justify-center mb-4">
                 <div class="w-full max-w-3xl bg-white rounded-lg shadow-md p-4">
-                    <h3 class="text-center text-lg font-bold mb-3">PayJoin Process Flow</h3>
+                    <h3 class="text-center text-lg font-bold mb-3">Payjoin Process Flow</h3>
                     <div class="flex justify-between items-center relative">
                         <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-300 -z-10 transform -translate-y-1/2"></div>
                         <div id="step-1" class="step-indicator active z-10 flex flex-col items-center">
@@ -39,7 +45,7 @@
                         </div>
                         <div id="step-4" class="step-indicator z-10 flex flex-col items-center">
                             <div class="w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold">4</div>
-                            <span class="text-xs mt-1 text-center">Create<br>PayJoin</span>
+                            <span class="text-xs mt-1 text-center">Create<br>Payjoin</span>
                         </div>
                         <div id="step-5" class="step-indicator z-10 flex flex-col items-center">
                             <div class="w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold">5</div>
@@ -82,19 +88,19 @@
                     </div>
                     
                     <div class="space-y-3">
-                        <button id="scan-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        <button id="scan-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all">
                             <i class="fas fa-qrcode mr-2"></i> Scan BIP21 Request
                         </button>
-                        <button id="create-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="create-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
                             <i class="fas fa-file-signature mr-2"></i> Create Original PSBT
                         </button>
-                        <button id="send-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="send-psbt-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
                             <i class="fas fa-paper-plane mr-2"></i> Send PSBT to Payjoin Directory
                         </button>
-                        <button id="sign-payjoin-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="sign-payjoin-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 transition-all" disabled>
                             <i class="fas fa-signature mr-2"></i> Sign Payjoin PSBT
                         </button>
-                        <button id="broadcast-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="broadcast-btn" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-500 transition-all" disabled>
                             <i class="fas fa-broadcast-tower mr-2"></i> Broadcast Transaction
                         </button>
                     </div>
@@ -112,7 +118,7 @@
                             <p class="text-sm text-gray-600">Wallet Balance: <span class="font-mono font-bold">0.02 BTC</span></p>
                             <div class="flex items-center">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/1200px-Bitcoin.svg.png" alt="Bitcoin" class="h-6 w-6 mr-2">
-                                <span class="text-xs font-semibold bg-purple-100 px-2 py-1 rounded">PayJoin Wallet</span>
+                                <span class="text-xs font-semibold bg-purple-100 px-2 py-1 rounded">Payjoin Wallet</span>
                             </div>
                         </div>
                         <div id="receiver-status" class="p-4 bg-gray-50 rounded">
@@ -131,17 +137,32 @@
                         </div>
                     </div>
                     
+                    <!-- Payjoin v2 Configuration -->
+                    <div id="payjoin-v2-config" class="mb-4 border rounded-lg p-4 bg-gray-50 fade-in">
+                        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Payjoin v2 Configuration</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label for="ohttp-relay" class="block text-xs font-medium text-gray-700 mb-1">OHTTP Relay URL</label>
+                                <input type="text" id="ohttp-relay" class="w-full p-2 text-sm border border-gray-300 rounded" value="https://relay.payjoin.org" placeholder="https://relay.payjoin.org">
+                            </div>
+                            <div>
+                                <label for="payjoin-directory" class="block text-xs font-medium text-gray-700 mb-1">Payjoin Directory URL</label>
+                                <input type="text" id="payjoin-directory" class="w-full p-2 text-sm border border-gray-300 rounded" value="https://directory.payjoin.org" placeholder="https://directory.payjoin.org">
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="space-y-3">
-                        <button id="generate-bip21-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-all">
+                        <button id="generate-bip21-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all">
                             <i class="fas fa-qrcode mr-2"></i> Generate BIP21 Request
                         </button>
-                        <button id="check-psbt-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="check-psbt-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
                             <i class="fas fa-search mr-2"></i> Check Original PSBT
                         </button>
-                        <button id="create-payjoin-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="create-payjoin-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
                             <i class="fas fa-edit mr-2"></i> Create Payjoin PSBT
                         </button>
-                        <button id="respond-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <button id="respond-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-500 transition-all" disabled>
                             <i class="fas fa-reply mr-2"></i> Respond with Payjoin PSBT
                         </button>
                     </div>
@@ -233,20 +254,27 @@
 
         <!-- Information Section -->
         <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">About PayJoin</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">About Payjoin</h2>
             <p class="text-gray-700">
-                PayJoin is a Bitcoin privacy technique that makes it harder for blockchain surveillance to track the flow of funds. It works by having the receiver contribute inputs to the transaction, breaking common blockchain analysis heuristics.
+                Payjoin is a Bitcoin privacy technique that makes it harder for blockchain surveillance to track the flow of funds. It works by having the receiver contribute inputs to the transaction, breaking common blockchain analysis heuristics.
             </p>
             <div class="mt-4">
                 <a href="https://payjoin.org/" target="_blank" class="text-blue-500 hover:text-blue-700 underline mr-4">Learn more at payjoin.org</a>
                 <a href="https://payjoindevkit.org/" target="_blank" class="text-blue-500 hover:text-blue-700 underline">Payjoin Development Kit</a>
             </div>
         </div>
+
+        <!-- Reset Button -->        
+        <div class="mt-6 text-center">
+            <button id="reset-btn" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-8 rounded transition-all">
+                <i class="fas fa-undo mr-2"></i> Reset Demo
+            </button>
+        </div>
     </main>
 
     <footer class="bg-gray-800 text-white mt-12 p-6">
         <div class="container mx-auto text-center">
-            <p>PayJoin Interactive Demo | Created for educational purposes</p>
+            <p>Payjoin Interactive Demo | Created for educational purposes</p>
         </div>
     </footer>
 

@@ -1,4 +1,4 @@
-// PayJoin Demo Script
+// Payjoin Demo Script
 
 // Demo state management
 const state = {
@@ -9,7 +9,10 @@ const state = {
     originalPsbt: '',
     payjoinPsbt: '',
     txid: '',
-    activeStepNumber: 1
+    activeStepNumber: 1,
+    payjoinVersion: 2,
+    ohttpRelay: 'https://relay.payjoin.org',
+    payjoinDirectory: 'https://directory.payjoin.org'
 };
 
 // DOM elements
@@ -35,10 +38,13 @@ const elements = {
     // Receiver elements
     receiverStatus: document.getElementById('receiver-status'),
     receiverUI: document.getElementById('receiver-ui'),
+    ohttpRelayInput: document.getElementById('ohttp-relay'),
+    payjoinDirectoryInput: document.getElementById('payjoin-directory'),
     generateBip21Btn: document.getElementById('generate-bip21-btn'),
     checkPsbtBtn: document.getElementById('check-psbt-btn'),
     createPayjoinBtn: document.getElementById('create-payjoin-btn'),
     respondBtn: document.getElementById('respond-btn'),
+    resetBtn: document.getElementById('reset-btn'),
     
     // Visualization elements
     dataFlowVisualization: document.getElementById('data-flow-visualization'),
@@ -60,13 +66,16 @@ const elements = {
 
 // Mock data
 const mockData = {
-    bip21: 'bitcoin:bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz?amount=0.01&pj=https://pj.example.com/endpoints/1a2b3c4d5e6f',
+    // Payjoin v2 BIP21 format includes payjoin info in BIP21 URI
+    bip21: 'bitcoin:bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz?amount=0.01&pj=v2&pjos=https://relay.payjoin.org&pjpd=https://directory.payjoin.org/1a2b3c4d5e6f',
     originalPsbt: 'cHNidP8BAHECAAAAAUlmL+oX8QYJQZBDWRxYsw5L0SNUp4ro5xr7aBNag8RVAAAAAIABAAAAAAD/////AhAnAAAAAAAAFgAU8AKGF1zIVqK8D+M2q9HBQrP3ahsBBwAAAAAAABYAFMYz73pT2TLOYshV+qtmzSqYRRYqAAAAAAABAIkCAAAAAZ0NOgZ1iCsVv7D0yEF5FyR92u8gV5MCYdWbzVFnQY12AAAAAP3///8C2AkAAAAAAAAWABTKWFfqrKJBV3Gg7J4xhHN9LywzXoNrBgAAAAAAFgAUR7BZ9rXCEBLiZE073WAnUBtJbI0AAAAAAQA/AgAAAAH4PLOkoNcV3FuL0yA+zXUVdeQtkfZnA8mKR9CpKSHNzQAAAAAA/v///wLYCQAAAAAAABYAFK4wLnFAJVQQgwrM+1gcGTj1ZrroQrEHAAAAAAAWABR7JTprv5R3F+k7WMdEXKRbpYXrZgAAAAABAP0CAAAAAf5hRQKcfDaT4ZmEFNXTQEcf8hZ6G1NHBkmVLfKlyBKYAAAAAAD+////AhAnAAAAAAAAFgAUaBrR6xW1u5FOvZxP3M/Vw2qrUFLYCwAAAAAAABYAFHCmeRNQsECTPzcHwGRTP20J1zGTAAAAAAA=',
     payjoinPsbt: 'cHNidP8BAJoCAAAAAklmL+oX8QYJQZBDWRxYsw5L0SNUp4ro5xr7aBNag8RVAAAAAAD/////g7UNFO0CY8HVD+f3Q8dh5pMQFTN+n9I7Y8ykwsrKZxsAAAAAAP////8CECcAAAAAAAAWABTwAoYXXMhWorwP4zar0cFCs/dqGwEHAAAAAAAAFgAUxjPvelPZMs5iyFX6q2bNKphFFioAAAAAAAEAiQIAAAABnQ06BnWIKxW/sPTIQXkXJH3a7yBXkwJh1ZvNUWdBjXYAAAAA/f///wLYCQAAAAAAABYAFMpYV+qsokFXcaDsnjGEc30vLDNeg2sGAAAAAAAWABRHsFn2tcIQEuJkTTvdYCdQG0lsjQAAAAABAD8CAAAAAf... truncated for demo purposes ...',
     txid: '7e7962b3e3d02b6d5c4c79ce4142f979f41c838723121c68cb3acc325329e620',
     receiverAddress: 'bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz',
     amount: '0.01 BTC',
-    payjoinEndpoint: 'https://pj.example.com/endpoints/1a2b3c4d5e6f'
+    // For v2, we separate these parameters
+    ohttpRelay: 'https://relay.payjoin.org',
+    payjoinDirectoryId: '1a2b3c4d5e6f'
 };
 
 // Initialize the UI
@@ -81,6 +90,19 @@ function init() {
     elements.respondBtn.addEventListener('click', handleRespondWithPayjoinPsbt);
     elements.signPayjoinBtn.addEventListener('click', handleSignPayjoinPsbt);
     elements.broadcastBtn.addEventListener('click', handleBroadcastTx);
+    elements.resetBtn.addEventListener('click', resetDemo);
+    
+    // Initialize reset button text
+    elements.resetBtn.innerHTML = '<i class="fas fa-redo-alt mr-2"></i>Reset Demo';
+    
+    // Add event listeners to config inputs
+    elements.ohttpRelayInput.addEventListener('change', function() {
+        state.ohttpRelay = this.value;
+    });
+    
+    elements.payjoinDirectoryInput.addEventListener('change', function() {
+        state.payjoinDirectory = this.value;
+    });
     
     // Initialize clipboard.js for copy buttons
     const clipboard = new ClipboardJS('.copy-btn', {
@@ -128,13 +150,21 @@ function updateStepIndicator(stepNumber) {
 
 // Event handlers
 function handleGenerateBip21() {
-    // Update state
-    state.bip21Uri = mockData.bip21;
+    // Get the values from the input fields
+    state.ohttpRelay = elements.ohttpRelayInput.value;
+    state.payjoinDirectory = elements.payjoinDirectoryInput.value;
+    
+    // Extract directory ID from the URL (assuming last path component is the ID)
+    const directoryUrlParts = state.payjoinDirectory.split('/');
+    const directoryId = directoryUrlParts[directoryUrlParts.length - 1];
+    
+    // Generate a v2 BIP21 URI with custom relay and directory
+    state.bip21Uri = `bitcoin:${mockData.receiverAddress}?amount=0.01&pj=v2&pjos=${encodeURIComponent(state.ohttpRelay)}&pjpd=${encodeURIComponent(state.payjoinDirectory)}`;  
     state.receiverStep = 'bip21_generated';
     updateStepIndicator(1);
     
     // Update UI
-    updateReceiverStatus('Generated BIP21 payment request with payjoin endpoint');
+    updateReceiverStatus('Generated BIP21 payment request with Payjoin v2 configuration');
     
     // Show the BIP21 URI in the code container for easy copying
     elements.codeContainers.bip21Code.textContent = state.bip21Uri;
@@ -146,7 +176,7 @@ function handleGenerateBip21() {
         <div class="bg-gray-100 p-3 rounded-lg">
             <div class="text-center mb-3">
                 <span class="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                    Payment Request Generated
+                    Payjoin v2 Request Generated
                 </span>
             </div>
             <div class="qr-container mx-auto mb-2">
@@ -163,7 +193,9 @@ function handleGenerateBip21() {
                 <p class="mb-1 font-semibold">Request details:</p>
                 <p class="text-gray-600">Amount: <span class="font-mono">${mockData.amount}</span></p>
                 <p class="text-gray-600">Address: <span class="font-mono text-xs">${mockData.receiverAddress.substring(0, 10)}...</span></p>
-                <p class="text-gray-600">PayJoin: <span class="text-green-600">Enabled</span></p>
+                <p class="text-gray-600">Payjoin: <span class="text-green-600">v2 Enabled</span></p>
+                <p class="text-gray-600">OHTTP Relay: <span class="font-mono text-xs">${state.ohttpRelay.substring(0, 18)}...</span></p>
+                <p class="text-gray-600">Directory: <span class="font-mono text-xs">${state.payjoinDirectory.substring(0, 18)}...</span></p>
             </div>
         </div>
     `;
@@ -404,16 +436,16 @@ function handleSendOriginalPsbt() {
     state.senderStep = 'psbt_sent';
     updateStepIndicator(4);
     
-    // Update UI
-    updateSenderStatus('Original PSBT sent to payjoin endpoint. Waiting for payjoin proposal...');
+    // Update UI with Payjoin v2 language
+    updateSenderStatus(`Original PSBT sent through OHTTP relay (${state.ohttpRelay}) to Payjoin directory. Waiting for proposal...`);
     
-    // Update sender UI with sending status
+    // Update sender UI with sending status 
     elements.senderUI.innerHTML = `
         <h3 class="text-center text-sm font-semibold mb-3 text-gray-700">Sender's View</h3>
         <div class="bg-gray-100 p-3 rounded-lg">
             <div class="text-center mb-3">
                 <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
-                    PSBT Sent
+                    PSBT Sent via Payjoin v2
                 </span>
             </div>
             <div class="bg-white rounded p-3 shadow-sm">
@@ -421,34 +453,74 @@ function handleSendOriginalPsbt() {
                     <span class="text-xs font-semibold text-gray-700">Submission Status</span>
                     <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Pending Response</span>
                 </div>
+                <div class="text-xs mb-2">
+                    <div class="flex justify-between">
+                        <span>OHTTP Relay:</span>
+                        <span class="font-mono">${state.ohttpRelay.substring(0, 15)}...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Payjoin Directory:</span>
+                        <span class="font-mono">${state.payjoinDirectory.substring(0, 15)}...</span>
+                    </div>
+                </div>
                 <div class="text-center mt-4 mb-4">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    <p class="text-sm text-gray-600 mt-2">Waiting for receiver to create PayJoin...</p>
+                    <p class="text-sm text-gray-600 mt-2">Waiting for receiver to create Payjoin...</p>
                 </div>
             </div>
         </div>
     `;
     
-    // Update data flow visualization to show the PSBT being sent
+    // Update data flow visualization to show the Payjoin v2 flow
     elements.dataFlowVisualization.innerHTML = `
         <div class="w-full">
-            <div class="flex justify-between items-center">
-                <div class="text-purple-500 opacity-50">
-                    <i class="fas fa-store text-xl"></i>
+            <div class="flex flex-col gap-4">
+                <div class="w-full text-center bg-gray-50 rounded-lg p-2">
+                    <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">Payjoin v2 Protocol Flow</span>
                 </div>
-                <div class="flex-grow mx-4 relative">
-                    <div class="h-0.5 bg-gray-300 w-full absolute top-1/2"></div>
-                    <div class="absolute top-1/2 left-0 w-1/2 h-0.5 bg-blue-500"></div>
-                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 fade-in" style="animation-delay:0.3s">
-                        <i class="fas fa-file-signature text-blue-500"></i>
+
+                <div class="flex items-center justify-between">
+                    <div class="text-blue-500 text-center">
+                        <i class="fas fa-mobile-alt text-xl"></i>
+                        <p class="text-xs mt-1">Sender</p>
                     </div>
-                </div>
-                <div class="text-blue-500">
-                    <i class="fas fa-mobile-alt text-xl"></i>
+                    
+                    <div class="h-px w-14 bg-blue-400 relative animate-pulse">
+                        <div class="absolute -top-1 right-0 animate-ping">
+                            <i class="fas fa-circle text-blue-500 text-xs"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="text-gray-600 bg-gray-100 p-2 rounded-lg text-center">
+                        <i class="fas fa-random text-sm"></i>
+                        <p class="text-xs mt-1">OHTTP Relay</p>
+                    </div>
+                    
+                    <div class="h-px w-14 bg-blue-400 relative animate-pulse">
+                        <div class="absolute -top-1 right-0 animate-ping">
+                            <i class="fas fa-circle text-blue-500 text-xs"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="text-gray-600 bg-gray-100 p-2 rounded-lg text-center">
+                        <i class="fas fa-server text-sm"></i>
+                        <p class="text-xs mt-1">Payjoin Directory</p>
+                    </div>
+                    
+                    <div class="h-px w-14 bg-blue-400 relative animate-pulse">
+                        <div class="absolute -top-1 right-0 animate-ping">
+                            <i class="fas fa-circle text-blue-500 text-xs"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="text-purple-500 text-center opacity-70">
+                        <i class="fas fa-store text-xl"></i>
+                        <p class="text-xs mt-1">Receiver</p>
+                    </div>
                 </div>
             </div>
             <div class="text-center mt-4">
-                <div class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">(4) Original PSBT sent to receiver</div>
+                <div class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">(4) PSBT sent via v2 protocol through OHTTP relay to Payjoin directory</div>
             </div>
         </div>
     `;
@@ -1030,20 +1102,116 @@ function resetDemo() {
     state.txid = '';
     state.activeStepNumber = 1;
     
+    // Reset Payjoin v2 configuration fields to defaults
+    state.ohttpRelay = 'https://relay.payjoin.org';
+    state.payjoinDirectory = 'https://directory.payjoin.org';
+    elements.ohttpRelayInput.value = state.ohttpRelay;
+    elements.payjoinDirectoryInput.value = state.payjoinDirectory;
+    
+    // Reset UI status messages
+    updateSenderStatus('Waiting for payment request...');
+    updateReceiverStatus('Ready to generate payment request...');
+    
+    // Reset sender UI
+    elements.senderUI.innerHTML = `
+        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Sender's View</h3>
+        <div class="sender-screen-container flex justify-center items-center h-full">
+            <div class="text-center text-gray-400">
+                <i class="fas fa-mobile-alt text-3xl mb-2"></i>
+                <p>Wallet ready for payment</p>
+            </div>
+        </div>
+    `;
+    
+    // Reset receiver UI
+    elements.receiverUI.innerHTML = `
+        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
+        <div class="receiver-screen-container flex justify-center items-center h-full">
+            <div class="text-center text-gray-400">
+                <i class="fas fa-store text-3xl mb-2"></i>
+                <p>Ready to receive payment</p>
+            </div>
+        </div>
+    `;
+    
     // Reset step indicators
     updateStepIndicator(1);
     
-    // Reset UI elements
-    updateSenderStatus('Waiting for receiver\'s payment request...');
-    updateReceiverStatus('Ready to generate payment request...');
+    // Reset button states
+    elements.generateBip21Btn.disabled = false;
+    elements.scanBtn.disabled = true;
+    elements.createPsbtBtn.disabled = true;
+    elements.sendPsbtBtn.disabled = true;
+    elements.checkPsbtBtn.disabled = true;
+    elements.createPayjoinBtn.disabled = true;
+    elements.signPayjoinBtn.disabled = true;
+    elements.broadcastBtn.disabled = true;
+    elements.respondBtn.disabled = true;
     
-    // Reset sender and receiver views
-    elements.senderUI.innerHTML = `
-        <div class="text-center text-gray-400">
-            <i class="fas fa-mobile-alt text-3xl mb-2"></i>
-            <p>Wallet ready for payment</p>
+    // Reset code containers and their content
+    Object.values(elements.codeContainers).forEach(container => {
+        if (container) {
+            container.classList.add('hidden');
+            const codeElement = container.querySelector('code');
+            if (codeElement) {
+                codeElement.textContent = '';
+            }
+        }
+    });
+    
+    // Reset step indicators
+    for (let i = 1; i <= 5; i++) {
+        const stepElement = elements.stepIndicators[`step${i}`];
+        if (stepElement) {
+            const numberDiv = stepElement.querySelector('div');
+            if (numberDiv) {
+                if (i === 1) {
+                    numberDiv.classList.remove('bg-gray-300', 'text-gray-700');
+                    numberDiv.classList.add('bg-blue-600', 'text-white');
+                } else {
+                    numberDiv.classList.remove('bg-blue-600', 'text-white');
+                    numberDiv.classList.add('bg-gray-300', 'text-gray-700');
+                }
+            }
+        }
+    }
+    
+    // Reset data flow visualization
+    elements.dataFlowVisualization.innerHTML = `
+        <div class="w-full">
+            <div class="flex justify-between items-center">
+                <div class="text-purple-500">
+                    <i class="fas fa-store text-xl"></i>
+                </div>
+                <div class="flex-grow mx-4 relative">
+                    <div class="h-0.5 bg-gray-300 w-full absolute top-1/2"></div>
+                </div>
+                <div class="text-blue-500">
+                    <i class="fas fa-mobile-alt text-xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <div class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">Ready to start</div>
+            </div>
         </div>
     `;
+    
+    // Reset transaction visualization
+    elements.transactionVisualization.innerHTML = `
+        <div class="w-full" style="min-height: 120px">
+            <p class="text-center text-gray-500 mb-4">No transaction created yet</p>
+            <div class="flex justify-center">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center w-40">
+                    <p class="text-sm font-medium text-purple-700">Receiver</p>
+                    <p class="text-xs text-gray-600 mt-1">Waiting for sender...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Clear any copy-to-clipboard buttons
+    const copyButtons = document.querySelectorAll('.copy-button');
+    copyButtons.forEach(button => button.remove());
     
     elements.receiverUI.innerHTML = `
         <div class="text-center text-gray-400">
