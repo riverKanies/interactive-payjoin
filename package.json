@@ -2,7 +2,7 @@
   "name": "pj-wasm-demo",
   "version": "1.0.0",
   "description": "An interactive web demonstration of the Bitcoin PayJoin protocol, showing how it enhances transaction privacy by breaking common blockchain analysis heuristics.",
-  "main": "script.js",
+  "main": "index.js",
   "scripts": {
     "start": "npx webpack serve --mode development",
     "build": "npx webpack --mode production",
