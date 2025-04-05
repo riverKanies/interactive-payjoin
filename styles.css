@@ -1,0 +1,125 @@
+/* Additional custom styles */
+
+/* Animation for state transitions */
+.transition-fade {
+    transition: all 0.5s ease;
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Style for bip21 uri display */
+.bip21-uri {
+    word-break: break-all;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+/* PSBT data display */
+.psbt-data {
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+/* Transaction visualization styles */
+.tx-input, .tx-output {
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+}
+
+.tx-input {
+    background-color: #dbeafe;
+    border: 1px solid #93c5fd;
+}
+
+.tx-output {
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+}
+
+.arrow-icon {
+    color: #6b7280;
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+/* Highlight animation */
+.highlight {
+    animation: highlight 1.5s ease;
+}
+
+@keyframes highlight {
+    0% { background-color: rgba(147, 197, 253, 0.3); }
+    100% { background-color: transparent; }
+}
+
+/* Mempool visualization */
+.mempool-block {
+    border: 1px dashed #d1d5db;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background-color: #f3f4f6;
+    position: relative;
+}
+
+.mempool-tx {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.mempool-tx:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.pending {
+    background-color: #fbbf24;
+}
+
+.status-indicator.success {
+    background-color: #10b981;
+}
+
+.status-indicator.error {
+    background-color: #ef4444;
+}
+
+/* QR code styling */
+.qr-container {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+    margin: 1rem 0;
+}
