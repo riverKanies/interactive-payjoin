@@ -1119,7 +1119,8 @@ function handleCheckOriginalPsbt() {
 
     receiverStep1()
 
-    updateReceiverStep(3, 'completed', 'Check Payjoin PSBT');
+    updateReceiverStep(2, 'completed', 'Check Original PSBT');
+    updateReceiverStep(3, 'current', 'Create Payjoin PSBT');
 }
 
 function handleCreatePayjoinPsbt() {
