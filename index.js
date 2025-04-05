@@ -103,23 +103,15 @@ async function createOriginalPsbt() {
 async function senderStep1() {
     const {pjUriString, psbtString} = window.payjoinState;
     const bip21Uri = Uri.parse(pjUriString);
-    console.log(bip21Uri.address());
     const pjUri = bip21Uri.check_pj_supported();
-    console.log(pjUri.as_string);
 
     const psbt = Psbt.from_string(psbtString);
     // console.log(psbt.to_json());
 
     const senderBuilder = SenderBuilder.from_psbt_and_uri(psbtString, pjUri);
-    console.log(senderBuilder);
     const sender = senderBuilder.build_recommended(BigInt(4));
-    console.log(sender);
     // getting context consumes the object, destructuring makes that seem natural
     const {request, context} = sender.extract_v2(ohttpRelay);
-    console.log(request);
-    console.log(request.url);
-    console.log(request.content_type);
-    // console.log(request.body);
     
     const response = await fetch(request.url, {
         method: 'POST',
@@ -140,10 +132,6 @@ async function senderStep1() {
 
     // consumes post context
     const sendGetContext = context.process_response(result);
-    console.log(sendGetContext);
-    // throws error bc post context is consumed
-    // const sendGetContext2 = context.process_response(result);
-    // console.log(sendGetContext2);
 
     window.payjoinState.sendGetContext = sendGetContext;
 }
@@ -157,16 +145,12 @@ async function receiverStep1() {
     console.log("receiver extracted client_response", client_response);
 
     // get fallback psbt
-    console.log(request);
-    console.log(request.url);
-    console.log(request.content_type);
-    // console.log(request.body);
     const response = await fetch(request.url, {
         method: 'POST',
         headers: {
             'Content-Type': request.content_type
         },
-        body: request.body//psbtString
+        body: request.body
     });
     console.log('fallback response', response);
     if (response.ok) {
@@ -182,7 +166,6 @@ async function receiverStep1() {
     const maybeInputsOwned = proposal.check_broadcast_suitability(null, true)
     console.log(maybeInputsOwned);
     const maybeInputsSeen = maybeInputsOwned.check_inputs_not_owned((input) => {
-        console.log(input);
         // need to actually confirm the sender input is not owned by receiver
         return false;
     })
@@ -193,23 +176,14 @@ async function receiverStep1() {
         // need to actually confirm the output hasn't been seen before
         return false;
     })
-    console.log(outputsUnknown);
 
     const wantsOutputs = outputsUnknown.identify_receiver_outputs((outputScript) => {
-        console.log(outputScript);
-        // need to actually confirm the output is owned by receiver
         return true;
     })
-    console.log(wantsOutputs);
 
     const wantsInputs = wantsOutputs.commit_outputs()
-    console.log(wantsInputs);
-
     const inputs = receiverWallet.list_unspent().map((utxo) => createInputPairWithTx(utxo))
-    console.log(inputs);
-
     const provisionalProposal = wantsInputs.contribute_inputs(inputs).commit_inputs()
-    console.log(provisionalProposal);
 
     const payjoinProposal = provisionalProposal.finalize_proposal(
         (psbt) => {
@@ -242,7 +216,6 @@ async function receiverStep1() {
         },
         body: finalRequest.body
     });
-    console.log('finalized', responsePayjoin);
     if (responsePayjoin.ok) {
         console.log('final proposal submitted success');
     } else {
@@ -253,34 +226,21 @@ async function receiverStep1() {
 }
 
 async function initSenderAndReceiverWallets() {
-    // generated descriptors using book of bdk descriptor example
     const senderDescriptorExternal = "tr(tprv8ZgxMBicQKsPeAndhG7FXuuk57oVpo4Y7xtUitrJyBRFnBHCCpLQofZZ7EZWcwB3zo8BLsJe8Qo5HeShP2zFoMx1zAA8PGnNGbfPozA4SvX/86'/1'/0'/0/*)#kkng6m9y"
     const senderDescriptorInternal = "tr(tprv8ZgxMBicQKsPeAndhG7FXuuk57oVpo4Y7xtUitrJyBRFnBHCCpLQofZZ7EZWcwB3zo8BLsJe8Qo5HeShP2zFoMx1zAA8PGnNGbfPozA4SvX/86'/1'/0'/1/*)#8zkf8w4u"
-
     const receiverDescriptorExternal = "tr(tprv8ZgxMBicQKsPdXaSHpSS8nXLfpPunAfEEs7K86ESCroA95iZbaxYyxgqNYurfnA85rKf7fXpqTcgtWC3w8cssERRxZtMafDmrYgRfp12PZw/86'/1'/0'/0/*)#vjm92l0u"
     const receiverDescriptorInternal = "tr(tprv8ZgxMBicQKsPdXaSHpSS8nXLfpPunAfEEs7K86ESCroA95iZbaxYyxgqNYurfnA85rKf7fXpqTcgtWC3w8cssERRxZtMafDmrYgRfp12PZw/86'/1'/0'/1/*)#ax7yh2ly"
-
     const senderWallet = Wallet.create(network, senderDescriptorExternal, senderDescriptorInternal);
     const receiverWallet = Wallet.create(network, receiverDescriptorExternal, receiverDescriptorInternal);
-
     const client = new EsploraClient("https://mutinynet.com/api");
-    // get sats from faucet: https://faucet.mutinynet.com/
 
-    console.log("Receiver syncing...");
     let receiver_scan_request = receiverWallet.start_full_scan();
     let receiver_update = await client.full_scan(receiver_scan_request, 5, 1);
     receiverWallet.apply_update(receiver_update);
-    console.log("Balance:", receiverWallet.balance.confirmed.to_sat());
-    // console.log("New address:", receiverWallet.reveal_next_address().address);
-    console.log("Transaction ID:", receiverWallet.list_unspent()[0].outpoint.txid.toString());
 
-    console.log("Sender syncing...");
     let sender_scan_request = senderWallet.start_full_scan();
     let sender_update = await client.full_scan(sender_scan_request, 5, 1);
     senderWallet.apply_update(sender_update);
-    console.log("Balance:", senderWallet.balance.confirmed.to_sat());
-    console.log("New address:", senderWallet.reveal_next_address().address.toString());
-
 
     return {senderWallet, receiverWallet};
 }
@@ -349,8 +309,6 @@ const elements = {
     // Receiver elements
     receiverStatus: document.getElementById('receiver-status'),
     receiverUI: document.getElementById('receiver-ui'),
-    ohttpRelayInput: document.getElementById('ohttp-relay'),
-    payjoinDirectoryInput: document.getElementById('payjoin-directory'),
     generateBip21Btn: document.getElementById('generate-bip21-btn'),
     checkPsbtBtn: document.getElementById('check-psbt-btn'),
     createPayjoinBtn: document.getElementById('create-payjoin-btn'),
@@ -384,9 +342,6 @@ const mockData = {
     txid: '7e7962b3e3d02b6d5c4c79ce4142f979f41c838723121c68cb3acc325329e620',
     receiverAddress: 'bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz',
     amount: '0.01 BTC',
-    // For v2, we separate these parameters
-    ohttpRelay: 'https://relay.payjoin.org',
-    payjoinDirectoryId: '1a2b3c4d5e6f'
 };
 
 // Initialize the UI
@@ -413,15 +368,6 @@ function init() {
     
     // Initialize reset button text
     elements.resetBtn.innerHTML = '<i class="fas fa-redo-alt mr-2"></i>Reset Demo';
-    
-    // Add event listeners to config inputs
-    elements.ohttpRelayInput.addEventListener('change', function() {
-        state.ohttpRelay = this.value;
-    });
-    
-    elements.payjoinDirectoryInput.addEventListener('change', function() {
-        state.payjoinDirectory = this.value;
-    });
     
     // Initialize clipboard.js for copy buttons
     const clipboard = new ClipboardJS('.copy-btn', {
@@ -469,16 +415,6 @@ function updateStepIndicator(stepNumber) {
 
 // Event handlers
 async function handleGenerateBip21() {
-
-    // Get the values from the input fields
-    state.ohttpRelay = elements.ohttpRelayInput.value;
-    state.payjoinDirectory = elements.payjoinDirectoryInput.value;
-    
-
-    // Extract directory ID from the URL (assuming last path component is the ID)
-    const directoryUrlParts = state.payjoinDirectory.split('/');
-    const directoryId = directoryUrlParts[directoryUrlParts.length - 1];
-    
     // Generate a v2 BIP21 URI with custom relay and directory
     state.bip21Uri = await createPjUri();
     state.receiverStep = 'bip21_generated';
