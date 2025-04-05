@@ -1,3 +1,59 @@
+
+import {  Wallet, EsploraClient, ChangeSet, FeeRate, Recipient, Address, Amount, Psbt, SignOptions } from 'bitcoindevkit';
+import { Uri, Receiver, SenderBuilder, Sender, Request, InputPair } from 'payjoindevkit';
+
+const network = "signet";
+
+// Some relays below. If you get a timeout error, try a different relay.
+// const ohttpRelay = "https://pj.benalleng.com";
+// const ohttpRelay = "https://ohttp.cakewallet.com";// down
+const ohttpRelay = "https://pj.bobspacebkk.com";
+
+
+// Note: ohttpkeys are the same for all three relays, guess they're specific to the endpoint only
+const ohttpKeys = "OH1QYP87E2AVMDKXDTU6R25WCPQ5ZUF02XHNPA65JMD8ZA2W4YRQN6UUWG"
+// if these don't work you can get the new keys for the default gateway using payjoin-cli fetch-keys https://github.com/payjoin/rust-payjoin/pull/589
+
+const payjoinDirectory = "https://payjo.in";
+
+async function initSenderAndReceiverWallets() {
+    // generated descriptors using book of bdk descriptor example
+    const senderDescriptorExternal = "tr(tprv8ZgxMBicQKsPeAndhG7FXuuk57oVpo4Y7xtUitrJyBRFnBHCCpLQofZZ7EZWcwB3zo8BLsJe8Qo5HeShP2zFoMx1zAA8PGnNGbfPozA4SvX/86'/1'/0'/0/*)#kkng6m9y"
+    const senderDescriptorInternal = "tr(tprv8ZgxMBicQKsPeAndhG7FXuuk57oVpo4Y7xtUitrJyBRFnBHCCpLQofZZ7EZWcwB3zo8BLsJe8Qo5HeShP2zFoMx1zAA8PGnNGbfPozA4SvX/86'/1'/0'/1/*)#8zkf8w4u"
+
+    const receiverDescriptorExternal = "tr(tprv8ZgxMBicQKsPdXaSHpSS8nXLfpPunAfEEs7K86ESCroA95iZbaxYyxgqNYurfnA85rKf7fXpqTcgtWC3w8cssERRxZtMafDmrYgRfp12PZw/86'/1'/0'/0/*)#vjm92l0u"
+    const receiverDescriptorInternal = "tr(tprv8ZgxMBicQKsPdXaSHpSS8nXLfpPunAfEEs7K86ESCroA95iZbaxYyxgqNYurfnA85rKf7fXpqTcgtWC3w8cssERRxZtMafDmrYgRfp12PZw/86'/1'/0'/1/*)#ax7yh2ly"
+
+    const senderWallet = Wallet.create(network, senderDescriptorExternal, senderDescriptorInternal);
+    const receiverWallet = Wallet.create(network, receiverDescriptorExternal, receiverDescriptorInternal);
+
+    const client = new EsploraClient("https://mutinynet.com/api");
+    // get sats from faucet: https://faucet.mutinynet.com/
+
+    console.log("Receiver syncing...");
+    let receiver_scan_request = receiverWallet.start_full_scan();
+    let receiver_update = await client.full_scan(receiver_scan_request, 5, 1);
+    receiverWallet.apply_update(receiver_update);
+    console.log("Balance:", receiverWallet.balance.confirmed.to_sat());
+    // console.log("New address:", receiverWallet.reveal_next_address().address);
+    console.log("Transaction ID:", receiverWallet.list_unspent()[0].outpoint.txid.toString());
+
+    console.log("Sender syncing...");
+    let sender_scan_request = senderWallet.start_full_scan();
+    let sender_update = await client.full_scan(sender_scan_request, 5, 1);
+    senderWallet.apply_update(sender_update);
+    console.log("Balance:", senderWallet.balance.confirmed.to_sat());
+    console.log("New address:", senderWallet.reveal_next_address().address.toString());
+
+
+    return {senderWallet, receiverWallet};
+}
+
+console.log('hello')
+
+initSenderAndReceiverWallets();
+
+
 // Payjoin Demo Script
 
 // Demo state management
@@ -597,6 +653,8 @@ function handleSendOriginalPsbt() {
     // Add highlight animation
     highlightElement(elements.payjoinDirectory);
     highlightElement(elements.dataFlowVisualization);
+    updateSenderStep(3, 'completed', 'Original PSBT sent.'); 
+    updateSenderStep(4, 'current', 'PSBT')
 }
 
 function handleCheckOriginalPsbt() {
