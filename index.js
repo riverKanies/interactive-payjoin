@@ -239,11 +239,28 @@ async function createPjUri() {
         ohttpKeys,
         ohttpRelay
     );
-    // console.log(receiver.to_json());
+    
     // got the pj_uri for the sender to use:
     const pjUriString = receiver.pj_uri().as_string
-    console.log({pjUriString})
+
+    window.payjoinState.receiver = receiver;
+    window.payjoinState.pjUriString = pjUriString;
+
     return pjUriString;
+}
+
+async function createOriginalPsbt() {
+    const {senderWallet, pjUriString, receiver} = window.payjoinState;
+    // TODO: Make variables
+    console.log({pjUriString, network})
+    const psbt = senderWallet.build_tx()
+        .fee_rate(new FeeRate(BigInt(4)))
+        .add_recipient(new Recipient(Address.from_string(receiver.pj_uri().address.toString(), network),
+            Amount.from_sat(BigInt(8000))))
+        .finish();
+    const psbtString = psbt.toString();
+    window.payjoinState.psbtString = psbtString;
+    return psbtString;
 }
 
 
@@ -829,6 +846,8 @@ function handleCreateOriginalPsbt() {
     // Update step UI
     updateSenderStep(2, 'completed', 'Original PSBT created successfully.');
     updateSenderStep(3, 'current', 'Now send the PSBT to the Payjoin directory for the receiver to process.');
+
+    createOriginalPsbt();
 }
 
 function handleSendOriginalPsbt() {
