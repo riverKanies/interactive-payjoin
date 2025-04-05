@@ -18,7 +18,9 @@ const payjoinDirectory = "https://payjo.in";
 
 
 // RUN
-main();
+// main();
+
+
 
 async function main() {
     const {receiver, receiverWallet, senderWallet} = await createAndSavePjUriAndPsbt();
@@ -303,6 +305,18 @@ async function initSenderAndReceiverWallets() {
 
     return {senderWallet, receiverWallet};
 }
+
+initSenderAndReceiverWallets().then(({receiverWallet, senderWallet}) => {
+    document.getElementById('receiver-balance').textContent = receiverWallet.balance.confirmed.to_sat();
+    document.getElementById('sender-balance').textContent = senderWallet.balance.confirmed.to_sat();
+})
+
+
+// ---------
+// 
+// 
+// 
+// ---------
 
 
 // Payjoin Demo Script
