@@ -1,6 +1,6 @@
 
-import {  Wallet, EsploraClient, ChangeSet, FeeRate, Recipient, Address, Amount, Psbt, SignOptions } from 'bitcoindevkit';
-import { Uri, Receiver, SenderBuilder, Sender, Request, InputPair } from 'payjoindevkit';
+import {  Wallet, EsploraClient, FeeRate, Recipient, Address, Amount, Psbt, SignOptions } from 'bitcoindevkit';
+import { Uri, Receiver, SenderBuilder, InputPair } from 'payjoindevkit';
 
 const network = "signet";
 
@@ -16,120 +16,6 @@ const ohttpKeys = "OH1QYP87E2AVMDKXDTU6R25WCPQ5ZUF02XHNPA65JMD8ZA2W4YRQN6UUWG"
 
 const payjoinDirectory = "https://payjo.in";
 
-
-// RUN
-// main();
-
-
-
-async function main() {
-    const {receiver, receiverWallet, senderWallet} = await createAndSavePjUriAndPsbt();
-    const sendGetContext = await senderStep1();
-
-    console.log("preparing for receiver to add inputTx", receiver, sendGetContext);
-
-    const {request, client_response} = await receiver.extract_req(ohttpRelay);
-    console.log("receiver extracted request", request);
-    console.log("receiver extracted client_response", client_response);
-
-    // get fallback psbt
-    console.log(request);
-    console.log(request.url);
-    console.log(request.content_type);
-    // console.log(request.body);
-    const response = await fetch(request.url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': request.content_type
-        },
-        body: request.body//psbtString
-    });
-    console.log('fallback response', response);
-    if (response.ok) {
-        console.log('fallback success');
-    } else {
-        return console.log('fallback failed', response);
-    }
-    const result = await response.bytes();
-    console.log(result);
-
-    const proposal = await receiver.process_res(result, client_response);
-    console.log(proposal);
-    const maybeInputsOwned = proposal.check_broadcast_suitability(null, true)
-    console.log(maybeInputsOwned);
-    const maybeInputsSeen = maybeInputsOwned.check_inputs_not_owned((input) => {
-        console.log(input);
-        // need to actually confirm the sender input is not owned by receiver
-        return false;
-    })
-    console.log(maybeInputsSeen);
-
-    const outputsUnknown = maybeInputsSeen.check_no_inputs_seen_before((outpoint) => {
-        console.log(outpoint);
-        // need to actually confirm the output hasn't been seen before
-        return false;
-    })
-    console.log(outputsUnknown);
-
-    const wantsOutputs = outputsUnknown.identify_receiver_outputs((outputScript) => {
-        console.log(outputScript);
-        // need to actually confirm the output is owned by receiver
-        return true;
-    })
-    console.log(wantsOutputs);
-
-    const wantsInputs = wantsOutputs.commit_outputs()
-    console.log(wantsInputs);
-
-    const inputs = receiverWallet.list_unspent().map((utxo) => createInputPairWithTx(utxo))
-    console.log(inputs);
-
-    const provisionalProposal = wantsInputs.contribute_inputs(inputs).commit_inputs()
-    console.log(provisionalProposal);
-
-    const payjoinProposal = provisionalProposal.finalize_proposal(
-        (psbt) => {
-            console.log('signing receiver inputs', psbt);
-            // final check
-            const psbtObj = Psbt.from_string(psbt)
-            console.log(psbtObj);
-            console.log(psbtObj.to_json());
-            console.log(receiverWallet)
-            try {
-                const options = new SignOptions()
-                console.log(options)
-                options.trust_witness_utxo = true
-                receiverWallet.sign_with_options(psbtObj, options);
-            } catch (e) {
-                console.error('sign err', e);
-            }
-            console.log('signed', psbtObj);
-            return psbtObj.toString()
-        },
-        BigInt(1),
-        BigInt(2)
-    )
-
-    let { request: finalRequest, client_response: finalContext } = payjoinProposal.extract_v2_req(ohttpRelay);
-    let responsePayjoin = await fetch(finalRequest.url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': finalRequest.content_type
-        },
-        body: finalRequest.body
-    });
-    console.log('finalized', responsePayjoin);
-    if (responsePayjoin.ok) {
-        console.log('final proposal submitted success');
-    } else {
-        throw('finalized submition failed', responsePayjoin);
-    }
-    const responseData = await responsePayjoin.bytes();
-    await payjoinProposal.process_res(responseData, finalContext);// what does this do?
-
-    senderStep2(senderWallet, sendGetContext);
-}
-
 function createInputPairWithTx(utxo) {
     return InputPair.new(
         utxo.outpoint.txid.toString(), // Txid to string
@@ -139,7 +25,8 @@ function createInputPairWithTx(utxo) {
     )
 }
 
-async function senderStep2(senderWallet, sendGetContext) {
+async function senderStep2() {
+    const {senderWallet, sendGetContext} = window.payjoinState
     // SENDER STEP 2
     console.log('sender step 2', sendGetContext);
     const res = await sendGetContext.extract_req(ohttpRelay);
@@ -363,52 +250,6 @@ async function receiverStep1() {
     }
     const responseData = await responsePayjoin.bytes();
     await payjoinProposal.process_res(responseData, finalContext);// what does this do?
-}
-
-
-async function createAndSavePjUriAndPsbt() {
-
-
-    // for full usage example to work off, see rust-payjoin/payjoin/tests/integration.rs#v2_to_v2
-
-
-    // init sender wallet
-    const {senderWallet, receiverWallet} = await initSenderAndReceiverWallets();
-
-    // const nextAddress = receiverWallet.reveal_next_address("external");
-    // console.log("next address", nextAddress.index, nextAddress.address.toString());
-    const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
-    console.log("address #", addressInfo.index);
-    const address = addressInfo.address.toString()
-
-    const receiver = Receiver.new(
-        address,
-        network,
-        payjoinDirectory,
-        ohttpKeys,
-        ohttpRelay
-    );
-    console.log(receiver);
-    // console.log(receiver.to_json());
-    // got the pj_uri for the sender to use:
-    const pjUriString = receiver.pj_uri().as_string
-    console.log(pjUriString)
-
-    // create psbt for pj_uri
-    const psbt = senderWallet.build_tx()
-        .fee_rate(new FeeRate(BigInt(4)))
-        .add_recipient(new Recipient(Address.from_string(receiver.pj_uri().address.toString(), network),
-            Amount.from_sat(BigInt(8000))))
-        .finish();
-    console.log(psbt.fee_amount().to_sat());
-    const psbtString = psbt.toString();
-    console.log(psbtString);
-
-    // save to local storage
-    localStorage.setItem("psbtString", psbtString);
-    localStorage.setItem("pjUriString", pjUriString);
-
-    return {receiver, receiverWallet, senderWallet}
 }
 
 async function initSenderAndReceiverWallets() {
@@ -1279,6 +1120,7 @@ function handleCreatePayjoinPsbt() {
 }
 
 function handleRespondWithPayjoinPsbt() {
+    
     // Update state
     state.receiverStep = 'payjoin_sent';
     updateStepIndicator(5);
@@ -1361,6 +1203,8 @@ function handleRespondWithPayjoinPsbt() {
     // Add highlight animation
     highlightElement(elements.payjoinDirectory);
     highlightElement(elements.dataFlowVisualization);
+
+    senderStep2()
 }
 
 function handleSignPayjoinPsbt() {
@@ -1736,199 +1580,7 @@ function highlightElement(element) {
 
 // Reset demo function
 function resetDemo() {
-    // Reset state
-    state.currentStep = 'initial';
-    state.senderStep = 'waiting';
-    state.receiverStep = 'ready';
-    state.bip21Uri = '';
-    state.originalPsbt = '';
-    state.payjoinPsbt = '';
-    state.txid = '';
-    state.activeStepNumber = 1;
-    
-    // Reset Payjoin v2 configuration fields to defaults
-    state.ohttpRelay = 'https://relay.payjoin.org';
-    state.payjoinDirectory = 'https://directory.payjoin.org';
-    elements.ohttpRelayInput.value = state.ohttpRelay;
-    elements.payjoinDirectoryInput.value = state.payjoinDirectory;
-    
-    // Reset UI status messages
-    updateSenderStatus('Waiting for payment request...');
-    updateReceiverStatus('Ready to generate payment request...');
-    
-    // Reset sender UI
-    elements.senderUI.innerHTML = `
-        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Sender's View</h3>
-        <div class="sender-screen-container flex justify-center items-center h-full">
-            <div class="text-center text-gray-400">
-                <i class="fas fa-mobile-alt text-3xl mb-2"></i>
-                <p>Wallet ready for payment</p>
-            </div>
-        </div>
-    `;
-    
-    // Reset receiver UI
-    elements.receiverUI.innerHTML = `
-        <h3 class="text-center text-sm font-semibold mb-3 text-gray-500">Receiver's View</h3>
-        <div class="receiver-screen-container flex flex-col justify-center items-center h-full">
-            <style>
-                .qr-fade {
-                    opacity: 0;
-                    transition: opacity 0.5s ease-in-out;
-                }
-                .qr-fade.show {
-                    opacity: 1;
-                }
-                .hidden-fade {
-                    opacity: 0;
-                    pointer-events: none;
-                }
-            </style>
-            <!-- Initial state with just the button -->
-            <button id="generate-bip21-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-colors duration-200">
-                <i class="fas fa-qrcode mr-2"></i> Receive Payjoin
-            </button>
-
-            <!-- QR code section (initially hidden) -->
-            <div id="qr-section" class="flex flex-col items-center space-y-4 hidden">
-                <p class="text-sm text-gray-600">Scan to make payment</p>
-                <bitcoin-qr
-                    id="payment-qr"
-                    class="qr-fade"
-                    unified="loading"
-                    image="assets/images/payjoin.svg"
-                    width="200"
-                    height="200"
-                    type="svg"
-                    corners-square-color="#db6d99"
-                    corners-dot-color="#db6d99"
-                    corners-square-type="extra-rounded"
-                    dots-type="classy-rounded"
-                    dots-color="#db6d99"
-                    image-embedded="true"
-                ></bitcoin-qr>
-            </div>
-        </div>
-    `;
-    
-    // Reset step indicators
-    updateStepIndicator(1);
-    
-    // Reset button states and reattach event listeners
-    elements.generateBip21Btn = document.getElementById('generate-bip21-btn');
-    elements.generateBip21Btn.addEventListener('click', () => console.log('asdf'));
-    elements.scanBtn.disabled = true;
-    elements.createPsbtBtn.disabled = true;
-    elements.sendPsbtBtn.disabled = true;
-    elements.checkPsbtBtn.disabled = true;
-    elements.createPayjoinBtn.disabled = true;
-    elements.signPayjoinBtn.disabled = true;
-    elements.broadcastBtn.disabled = true;
-    elements.respondBtn.disabled = true;
-    
-    // Reset code containers and their content
-    Object.values(elements.codeContainers).forEach(container => {
-        if (container) {
-            container.classList.add('hidden');
-            const codeElement = container.querySelector('code');
-            if (codeElement) {
-                codeElement.textContent = '';
-            }
-        }
-    });
-    
-    // Reset step indicators
-    for (let i = 1; i <= 5; i++) {
-        const stepElement = elements.stepIndicators[`step${i}`];
-        if (stepElement) {
-            const numberDiv = stepElement.querySelector('div');
-            if (numberDiv) {
-                if (i === 1) {
-                    numberDiv.classList.remove('bg-gray-300', 'text-gray-700');
-                    numberDiv.classList.add('bg-blue-600', 'text-white');
-                } else {
-                    numberDiv.classList.remove('bg-blue-600', 'text-white');
-                    numberDiv.classList.add('bg-gray-300', 'text-gray-700');
-                }
-            }
-        }
-    }
-    
-    // Reset data flow visualization
-    elements.dataFlowVisualization.innerHTML = `
-        <div class="w-full">
-            <div class="flex justify-between items-center">
-                <div class="text-purple-500">
-                    <i class="fas fa-store text-xl"></i>
-                </div>
-                <div class="flex-grow mx-4 relative">
-                    <div class="h-0.5 bg-gray-300 w-full absolute top-1/2"></div>
-                </div>
-                <div class="text-blue-500">
-                    <i class="fas fa-mobile-alt text-xl opacity-50"></i>
-                </div>
-            </div>
-            <div class="text-center mt-4">
-                <div class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">Ready to start</div>
-            </div>
-        </div>
-    `;
-    
-    // Reset transaction visualization
-    elements.transactionVisualization.innerHTML = `
-        <div class="w-full" style="min-height: 120px">
-            <p class="text-center text-gray-500 mb-4">No transaction created yet</p>
-            <div class="flex justify-center">
-                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center w-40">
-                    <p class="text-sm font-medium text-purple-700">Receiver</p>
-                    <p class="text-xs text-gray-600 mt-1">Waiting for sender...</p>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Clear any copy-to-clipboard buttons
-    const copyButtons = document.querySelectorAll('.copy-button');
-    copyButtons.forEach(button => button.remove());
-    
-    
-    // Reset visualization areas
-    elements.dataFlowVisualization.innerHTML = `
-        <div class="text-center text-gray-500">
-            <i class="fas fa-exchange-alt text-3xl mb-2"></i>
-            <p>Data flow visualization will appear here</p>
-        </div>
-    `;
-    
-    elements.payjoinDirectory.innerHTML = `
-        <p class="text-gray-500 text-center">No data in the payjoin directory yet...</p>
-    `;
-    
-    elements.transactionVisualization.innerHTML = `
-        <div class="text-center text-gray-500">
-            <i class="fas fa-exchange-alt text-3xl mb-2"></i>
-            <p>Transaction visualization will appear here</p>
-        </div>
-    `;
-    
-    // Hide all code containers
-    elements.codeContainers.bip21Container.classList.add('hidden');
-    elements.codeContainers.originalPsbtContainer.classList.add('hidden');
-    elements.codeContainers.payjoinPsbtContainer.classList.add('hidden');
-    elements.codeContainers.txidContainer.classList.add('hidden');
-    
-    // Reset buttons
-    elements.generateBip21Btn.disabled = false;
-    elements.scanBtn.disabled = true;
-    elements.createPsbtBtn.disabled = true;
-    elements.sendPsbtBtn.disabled = true;
-    elements.checkPsbtBtn.disabled = true;
-    elements.createPayjoinBtn.disabled = true;
-    elements.respondBtn.disabled = true;
-    elements.signPayjoinBtn.disabled = true;
-    elements.broadcastBtn.disabled = true;
+    window.location.reload();
 }
 
-// Initialize on page load
-// document.addEventListener('DOMContentLoaded', init);
-init()
+init();
