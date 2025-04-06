@@ -65,6 +65,7 @@ async function senderStep2() {
 }
 
 async function createPjUri() {
+    console.log('Creating Receiver Payjoin URI...')
     const {receiverWallet} = window.payjoinState
     const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
     const address = addressInfo.address.toString()
@@ -78,38 +79,51 @@ async function createPjUri() {
     );
     
     // got the pj_uri for the sender to use:
-    const pjUriString = receiver.pj_uri().as_string
+    const pjUriString = receiver.pj_uri().as_string;
+
+    console.log('Created Receiver Payjoin URI:', pjUriString);
 
     window.payjoinState.receiver = receiver;
     window.payjoinState.pjUriString = pjUriString;
+    window.payjoinState.receiverWallet = receiverWallet;
+    window.payjoinState.address = address;
 
     return pjUriString;
 }
 
 async function createOriginalPsbt() {
+    console.log('Creating original PSBT...')
+    const senderAmountSats = 8000;
+    const senderFeeSats = 4;
     const {senderWallet, pjUriString, receiver} = window.payjoinState;
-    // TODO: Make variables
     console.log({pjUriString, network})
     const psbt = senderWallet.build_tx()
-        .fee_rate(new FeeRate(BigInt(4)))
+        .fee_rate(new FeeRate(BigInt(senderFeeSats)))
         .add_recipient(new Recipient(Address.from_string(receiver.pj_uri().address.toString(), network),
-            Amount.from_sat(BigInt(8000))))
+            Amount.from_sat(BigInt(senderAmountSats))))
         .finish();
     const psbtString = psbt.toString();
     window.payjoinState.psbtString = psbtString;
+    window.payjoinState.psbt = psbt;
+    window.payjoinState.amount_sats = senderAmountSats;
+    window.payjoinState.senderFeeSats = senderFeeSats;
+    
     return psbtString;
 }
 
 async function senderStep1() {
+    console.log('Sender checking PSBT...')
     const {pjUriString, psbtString} = window.payjoinState;
     const bip21Uri = Uri.parse(pjUriString);
     const pjUri = bip21Uri.check_pj_supported();
 
     const psbt = Psbt.from_string(psbtString);
-    // console.log(psbt.to_json());
+
+    window.payjoinState.psbt = psbt;
+    window.payjoinState.pjUri = pjUri;
 
     const senderBuilder = SenderBuilder.from_psbt_and_uri(psbtString, pjUri);
-    const sender = senderBuilder.build_recommended(BigInt(4));
+    const sender = senderBuilder.build_recommended(BigInt(window.payjoinState.senderFeeSats));
     // getting context consumes the object, destructuring makes that seem natural
     const {request, context} = sender.extract_v2(ohttpRelay);
     
@@ -247,9 +261,8 @@ async function initSenderAndReceiverWallets() {
 
 
 initSenderAndReceiverWallets().then(({receiverWallet, senderWallet}) => {
-    document.getElementById('receiver-balance').textContent = receiverWallet.balance.confirmed.to_sat();
-    document.getElementById('sender-balance').textContent = senderWallet.balance.confirmed.to_sat();
-
+    document.getElementById('receiver-balance').textContent = receiverWallet.balance.confirmed.to_sat().toLocaleString();
+    document.getElementById('sender-balance').textContent = senderWallet.balance.confirmed.to_sat().toLocaleString();
     window.payjoinState.receiverWallet = receiverWallet
     window.payjoinState.senderWallet = senderWallet
 })
@@ -269,14 +282,7 @@ const state = {
     currentStep: 'initial',
     senderStep: 'waiting',
     receiverStep: 'ready',
-    bip21Uri: '',
-    originalPsbt: '',
-    payjoinPsbt: '',
-    txid: '',
     activeStepNumber: 1,
-    payjoinVersion: 2,
-    ohttpRelay: 'https://relay.payjoin.org',
-    payjoinDirectory: 'https://directory.payjoin.org'
 };
 
 // DOM elements
@@ -331,17 +337,6 @@ const elements = {
         txidContainer: document.getElementById('txid-container'),
         txidCode: document.getElementById('txid-code')
     }
-};
-
-// Mock data
-const mockData = {
-    // Payjoin v2 BIP21 format includes payjoin info in BIP21 URI
-    bip21: 'bitcoin:bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz?amount=0.01&pj=v2&pjos=https://relay.payjoin.org&pjpd=https://directory.payjoin.org/1a2b3c4d5e6f',
-    originalPsbt: 'cHNidP8BAHECAAAAAUlmL+oX8QYJQZBDWRxYsw5L0SNUp4ro5xr7aBNag8RVAAAAAIABAAAAAAD/////AhAnAAAAAAAAFgAU8AKGF1zIVqK8D+M2q9HBQrP3ahsBBwAAAAAAABYAFMYz73pT2TLOYshV+qtmzSqYRRYqAAAAAAABAIkCAAAAAZ0NOgZ1iCsVv7D0yEF5FyR92u8gV5MCYdWbzVFnQY12AAAAAP3///8C2AkAAAAAAAAWABTKWFfqrKJBV3Gg7J4xhHN9LywzXoNrBgAAAAAAFgAUR7BZ9rXCEBLiZE073WAnUBtJbI0AAAAAAQA/AgAAAAH4PLOkoNcV3FuL0yA+zXUVdeQtkfZnA8mKR9CpKSHNzQAAAAAA/v///wLYCQAAAAAAABYAFK4wLnFAJVQQgwrM+1gcGTj1ZrroQrEHAAAAAAAWABR7JTprv5R3F+k7WMdEXKRbpYXrZgAAAAABAP0CAAAAAf5hRQKcfDaT4ZmEFNXTQEcf8hZ6G1NHBkmVLfKlyBKYAAAAAAD+////AhAnAAAAAAAAFgAUaBrR6xW1u5FOvZxP3M/Vw2qrUFLYCwAAAAAAABYAFHCmeRNQsECTPzcHwGRTP20J1zGTAAAAAAA=',
-    payjoinPsbt: 'cHNidP8BAJoCAAAAAklmL+oX8QYJQZBDWRxYsw5L0SNUp4ro5xr7aBNag8RVAAAAAAD/////g7UNFO0CY8HVD+f3Q8dh5pMQFTN+n9I7Y8ykwsrKZxsAAAAAAP////8CECcAAAAAAAAWABTwAoYXXMhWorwP4zar0cFCs/dqGwEHAAAAAAAAFgAUxjPvelPZMs5iyFX6q2bNKphFFioAAAAAAAEAiQIAAAABnQ06BnWIKxW/sPTIQXkXJH3a7yBXkwJh1ZvNUWdBjXYAAAAA/f///wLYCQAAAAAAABYAFMpYV+qsokFXcaDsnjGEc30vLDNeg2sGAAAAAAAWABRHsFn2tcIQEuJkTTvdYCdQG0lsjQAAAAABAD8CAAAAAf... truncated for demo purposes ...',
-    txid: '7e7962b3e3d02b6d5c4c79ce4142f979f41c838723121c68cb3acc325329e620',
-    receiverAddress: 'bc1qxyz123abc456def789ghi0jklmn0pqrstuvwxyz',
-    amount: '0.01 BTC',
 };
 
 // Initialize the UI
@@ -416,7 +411,7 @@ function updateStepIndicator(stepNumber) {
 // Event handlers
 async function handleGenerateBip21() {
     // Generate a v2 BIP21 URI with custom relay and directory
-    state.bip21Uri = await createPjUri();
+    window.payjoinState.bip21Uri = await createPjUri();
     state.receiverStep = 'bip21_generated';
     updateStepIndicator(1);
     
@@ -424,7 +419,7 @@ async function handleGenerateBip21() {
     updateReceiverStatus('Generated BIP21 payment request with Payjoin v2 configuration');
     
     // Show the BIP21 URI in the code container for easy copying
-    elements.codeContainers.bip21Code.textContent = state.bip21Uri;
+    elements.codeContainers.bip21Code.textContent = window.payjoinState.bip21Uri;
     elements.codeContainers.bip21Container.classList.remove('hidden');
     
     // Show QR section and hide generate button
@@ -449,11 +444,10 @@ async function handleGenerateBip21() {
     const qrComponent = document.getElementById('payment-qr');
     if (qrComponent) {
         // Force a re-render by removing and re-adding the component
-        console.log(state.bip21Uri)
         const parent = qrComponent.parentNode;
         const oldQr = qrComponent;
         const newQr = oldQr.cloneNode(true);
-        newQr.setAttribute('unified', state.bip21Uri);
+        newQr.setAttribute('unified', window.payjoinState.bip21Uri);
         
         // Start with opacity 0
         newQr.classList.remove('show');
@@ -473,11 +467,8 @@ async function handleGenerateBip21() {
         </div>
         <div class="text-sm space-y-2">
             <p class="font-semibold">Request details:</p>
-            <p class="text-gray-600">Amount: <span class="font-mono">${mockData.amount}</span></p>
-            <p class="text-gray-600">Address: <span class="font-mono text-xs">${mockData.receiverAddress.substring(0, 10)}...</span></p>
+            <p class="text-gray-600">Address: <span class="font-mono text-xs">${window.payjoinState.bip21Uri}</span></p>
             <p class="text-gray-600">Payjoin: <span class="text-green-600">v2 Enabled</span></p>
-            <p class="text-gray-600">OHTTP Relay: <span class="font-mono text-xs">${state.ohttpRelay.substring(0, 18)}...</span></p>
-            <p class="text-gray-600">Directory: <span class="font-mono text-xs">${state.payjoinDirectory.substring(0, 18)}...</span></p>
         </div>
     `;
 
