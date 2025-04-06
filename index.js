@@ -122,6 +122,8 @@ async function senderStep1() {
     window.payjoinState.psbt = psbt;
     window.payjoinState.pjUri = pjUri;
 
+    console.log("Original PSBT", {psbt, pjUri})
+
     const senderBuilder = SenderBuilder.from_psbt_and_uri(psbtString, pjUri);
     const sender = senderBuilder.build_recommended(BigInt(window.payjoinState.senderFeeSats));
     // getting context consumes the object, destructuring makes that seem natural
@@ -535,6 +537,7 @@ async function handleGenerateBip21() {
 }
 
 function handleScanBip21() {
+    const {address, amount_sats} = window.payjoinState;
     // Update state
     state.senderStep = 'bip21_scanned';
     updateStepIndicator(2);
@@ -556,14 +559,7 @@ function handleScanBip21() {
                     <span class="text-xs font-semibold text-gray-700">Payment Details</span>
                     <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">PayJoin Enabled</span>
                 </div>
-                <div class="space-y-1">
-                    <p class="text-sm">To: <span class="font-mono text-xs text-gray-600">${mockData.receiverAddress.substring(0, 10)}...</span></p>
-                    <p class="text-sm">Amount: <span class="font-semibold">${mockData.amount}</span></p>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="text-xs text-gray-600">Network Fee: ~0.00001 BTC</span>
-                        <span class="text-xs text-gray-600">Total: 0.01001 BTC</span>
-                    </div>
-                </div>
+                <p class="text-sm">Address: <span class="font-semibold">${address}</span></p>
             </div>
             <div class="text-center text-xs text-gray-600">
                 <p>Tap "Create PSBT" to proceed</p>
@@ -609,7 +605,6 @@ function handleScanBip21() {
 
 function handleCreateOriginalPsbt() {
     // Update state
-    state.originalPsbt = mockData.originalPsbt;
     state.senderStep = 'psbt_created';
     updateStepIndicator(3);
 
@@ -617,7 +612,7 @@ function handleCreateOriginalPsbt() {
     updateSenderStatus('Original PSBT created. Ready to send to payjoin endpoint.');
     
     // Show the PSBT in the code container for easy copying
-    elements.codeContainers.originalPsbtCode.textContent = state.originalPsbt;
+    elements.codeContainers.originalPsbtCode.textContent = window.payjoinState.psbtString;
     elements.codeContainers.originalPsbtContainer.classList.remove('hidden');
     
     // Update sender UI with PSBT creation
