@@ -5,13 +5,16 @@
   "main": "index.js",
   "scripts": {
     "start": "npx webpack serve --mode development",
-    "build": "npx webpack --mode production",
+    "build": "webpack --mode production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "css-loader": "^7.1.2",
+    "mini-css-extract-plugin": "^2.9.2",
+    "style-loader": "^4.0.0",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"
