@@ -224,6 +224,8 @@ async function receiverStep1() {
         BigInt(2)
     )
 
+    window.payjoinState.payjoinPsbt = payjoinProposal;
+
     let { request: finalRequest, client_response: finalContext } = payjoinProposal.extract_v2_req(ohttpRelay);
     let responsePayjoin = await fetch(finalRequest.url, {
         method: 'POST',
@@ -719,12 +721,13 @@ function handleCreateOriginalPsbt() {
 }
 
 function handleSendOriginalPsbt() {
+    const { psbtString } = window.payjoinState;
     // Update state
     state.senderStep = 'psbt_sent';
     updateStepIndicator(4);
     
     // Update UI with Payjoin v2 language
-    updateSenderStatus(`Original PSBT sent through OHTTP relay (${state.ohttpRelay}) to Payjoin directory. Waiting for proposal...`);
+    updateSenderStatus(`Original PSBT sent through OHTTP relay to Payjoin directory. Waiting for proposal...`);
     
     // Update sender UI with sending status 
     elements.senderUI.innerHTML = `
@@ -739,16 +742,6 @@ function handleSendOriginalPsbt() {
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-xs font-semibold text-gray-700">Submission Status</span>
                     <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Pending Response</span>
-                </div>
-                <div class="text-xs mb-2">
-                    <div class="flex justify-between">
-                        <span>OHTTP Relay:</span>
-                        <span class="font-mono">${state.ohttpRelay.substring(0, 15)}...</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Payjoin Directory:</span>
-                        <span class="font-mono">${state.payjoinDirectory.substring(0, 15)}...</span>
-                    </div>
                 </div>
                 <div class="text-center mt-4 mb-4">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -820,7 +813,7 @@ function handleSendOriginalPsbt() {
                 <span class="text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">Just Added</span>
             </div>
             <div class="bg-blue-50 border border-blue-100 p-2 rounded font-mono text-xs overflow-x-auto highlight">
-                ${truncatePsbt(state.originalPsbt)}
+                ${truncatePsbt(psbtString)}
             </div>
         </div>
     `;
@@ -840,6 +833,7 @@ function handleSendOriginalPsbt() {
 }
 
 function handleCheckOriginalPsbt() {
+    const { psbtString, amount_sats } = window.payjoinState;
     // Update state
     state.receiverStep = 'psbt_received';
     
@@ -862,7 +856,7 @@ function handleCheckOriginalPsbt() {
                 </div>
                 <div class="border border-gray-200 rounded p-2 bg-gray-50">
                     <div class="text-xs font-medium mb-1">Standard Transaction:</div>
-                    <div class="text-xs font-mono mb-2">Receiving: <span class="text-green-600 font-semibold">${mockData.amount}</span></div>
+                    <div class="text-xs font-mono mb-2">Receiving: <span class="text-green-600 font-semibold">${amount_sats}</span></div>
                     <div class="text-xs font-medium text-purple-700">PayJoin Action:</div>
                     <div class="text-xs text-gray-600">Add your own input to enhance privacy</div>
                 </div>
@@ -883,15 +877,16 @@ function handleCheckOriginalPsbt() {
     // Add highlight animation
     highlightElement(elements.receiverUI);
 
-    receiverStep1()
+    // handles checking the original psbt and creating the payjoin psbt
+    receiverStep1();
 
     updateReceiverStep(2, 'completed', 'Check Original PSBT');
     updateReceiverStep(3, 'current', 'Create Payjoin PSBT');
 }
 
 function handleCreatePayjoinPsbt() {
+    const { payjoinPsbt, amount_sats } = window.payjoinState;
     // Update state
-    state.payjoinPsbt = mockData.payjoinPsbt;
     state.receiverStep = 'payjoin_created';
     updateStepIndicator(4);
     
@@ -903,7 +898,7 @@ function handleCreatePayjoinPsbt() {
     updateReceiverStep(4, 'current', 'Ready to send the Payjoin PSBT back to the sender.');
     
     // Show the Payjoin PSBT in the code container for easy copying
-    elements.codeContainers.payjoinPsbtCode.textContent = state.payjoinPsbt;
+    elements.codeContainers.payjoinPsbtCode.textContent = payjoinPsbt;
     elements.codeContainers.payjoinPsbtContainer.classList.remove('hidden');
     
     // Update receiver UI
@@ -1045,6 +1040,7 @@ function handleCreatePayjoinPsbt() {
 }
 
 function handleRespondWithPayjoinPsbt() {
+    const { payjoinPsbt, psbtString } = window.payjoinState;
     
     // Update state
     state.receiverStep = 'payjoin_sent';
@@ -1083,7 +1079,7 @@ function handleRespondWithPayjoinPsbt() {
                 <span class="text-xs text-gray-500">Received</span>
             </div>
             <div class="bg-gray-100 p-2 rounded font-mono text-xs overflow-x-auto">
-                ${truncatePsbt(state.originalPsbt)}
+                ${truncatePsbt(psbtString)}
             </div>
         </div>
         <div class="p-3">
@@ -1092,7 +1088,7 @@ function handleRespondWithPayjoinPsbt() {
                 <span class="text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">Just Added</span>
             </div>
             <div class="bg-purple-50 border border-purple-100 p-2 rounded font-mono text-xs overflow-x-auto highlight">
-                ${truncatePsbt(state.payjoinPsbt)}
+                ${truncatePsbt(payjoinPsbt)}
             </div>
         </div>
     `;
