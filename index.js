@@ -1,4 +1,8 @@
-
+import 'bitcoin-qr/loader';
+// If you need to use the component programmatically, you might not need a named import.
+// Just importing it registers the web component globally (e.g., <bitcoin-qr>).
+// Test it:
+console.log('bitcoin-qr component should be registered');
 import {  Wallet, EsploraClient, FeeRate, Recipient, Address, Amount, Psbt, SignOptions } from 'bitcoindevkit';
 import { Uri, Receiver, SenderBuilder, InputPair } from 'payjoindevkit';
 
