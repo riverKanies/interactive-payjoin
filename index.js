@@ -298,6 +298,9 @@ const elements = {
     
     // Explanation element
     stepExplanation: document.getElementById('step-explanation'),
+
+    // Sender buttons
+    scanBtn: document.getElementById('scan-btn'),
     
     // Sender elements
     senderStatus: document.getElementById('sender-status'),
