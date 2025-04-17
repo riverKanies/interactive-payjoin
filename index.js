@@ -48,7 +48,7 @@ async function senderStep2() {
     console.log('sender step 2', response);
     const result = await response.bytes();
     const checkedPayjoinProposalPsbt = sendGetContext.process_response(result, ohttp_ctx);
-    console.log(checkedPayjoinProposalPsbt);
+    // console.log(checkedPayjoinProposalPsbt);
 
     // Convert PSBT string to PSBT object
     let payjoinPsbt = Psbt.from_string(checkedPayjoinProposalPsbt);
@@ -56,9 +56,13 @@ async function senderStep2() {
     // Sign the PSBT with the wallet
     senderWallet.sign(payjoinPsbt);
 
+    // pop up modal displaying the tx
+    displayTxModal(payjoinPsbt.toString());
+
     // Extract the final transaction
     let finalTx = payjoinPsbt.extract_tx();
     console.log("ready to broadcast", finalTx);
+
 
     const client = new EsploraClient("https://mutinynet.com/api");
     // const broadcasted = await client.broadcast(finalTx)
@@ -71,7 +75,7 @@ async function senderStep2() {
 async function createPjUri() {
     console.log('Creating Receiver Payjoin URI...')
     const {receiverWallet} = window.payjoinState
-    const addressInfo = receiverWallet.reveal_addresses_to("external", 3)[0]
+    const addressInfo = receiverWallet.reveal_next_address("external")
     const address = addressInfo.address.toString()
 
     const receiver = Receiver.new(
@@ -309,7 +313,7 @@ const elements = {
 
     // Sender buttons
     scanBtn: document.getElementById('scan-btn'),
-    
+    scanBtnStep: document.getElementById('scan-btn-step'),
     // Sender elements
     senderStatus: document.getElementById('sender-status'),
     senderUI: document.getElementById('sender-ui'),
@@ -317,7 +321,7 @@ const elements = {
     // Receiver buttons
     createPayjoinBtn: document.getElementById('create-payjoin-btn'),
     respondBtn: document.getElementById('respond-btn'),
-    scanBtn: document.getElementById('scan-btn'),
+    // scanBtn: document.getElementById('scan-btn'),
     createPsbtBtn: document.getElementById('create-psbt-btn'),
     sendPsbtBtn: document.getElementById('send-psbt-btn'),
     signPayjoinBtn: document.getElementById('sign-payjoin-btn'),
@@ -355,6 +359,7 @@ function init() {
     // Add event listeners to buttons
     elements.generateBip21Btn.addEventListener('click', handleGenerateBip21);
     elements.scanBtn.addEventListener('click', handleScanBip21);
+    elements.scanBtnStep.addEventListener('click', handleScanBip21);
     elements.createPsbtBtn.addEventListener('click', handleCreateOriginalPsbt);
     elements.sendPsbtBtn.addEventListener('click', handleSendOriginalPsbt);
     elements.checkPsbtBtn.addEventListener('click', handleCheckOriginalPsbt);
@@ -1536,6 +1541,46 @@ function highlightElement(element) {
 // Reset demo function
 function resetDemo() {
     window.location.reload();
+}
+
+function displayTxModal(finalTx) {
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'bg-white rounded-lg p-6 max-w-2xl w-full mx-4 relative max-h-[90vh] flex flex-col';
+    
+    // Create close button
+    const closeButton = document.createElement('button');
+    closeButton.className = 'absolute top-4 right-4 text-gray-500 hover:text-gray-700';
+    closeButton.innerHTML = '✕';
+    closeButton.onclick = () => modal.remove();
+    
+    // Create title
+    const title = document.createElement('h3');
+    title.className = 'text-lg font-semibold mb-4';
+    title.textContent = 'Payjoin Transaction Ready to Broadcast';
+    
+    // Create transaction display
+    const txDisplay = document.createElement('pre');
+    txDisplay.className = 'bg-gray-100 p-4 rounded overflow-auto text-sm font-mono whitespace-pre-wrap break-all flex-1';
+    txDisplay.textContent = finalTx.toString();
+    
+    // Assemble modal
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(title);
+    modalContent.appendChild(txDisplay);
+    modal.appendChild(modalContent);
+    
+    // Add click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+    
+    // Add to document
+    document.body.appendChild(modal);
 }
 
 init();

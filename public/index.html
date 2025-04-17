@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payjoin Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
     <!-- Font Awesome for copy icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script type="module" src="../node_modules/bitcoin-qr/dist/bitcoin-qr/bitcoin-qr.esm.js"></script>
+    <script type="module" src="/assets/js/bitcoin-qr.esm.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
     <header class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
@@ -150,7 +150,7 @@
                             <div id="sender-step-1" class="step flex items-center p-2 rounded-md">
                                 <div class="step-number w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-bold">1</div>
                                 <span class="step-text">Scan BIP21 Request</span>
-                                <button id="scan-btn" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0">
+                                <button id="scan-btn-step" class="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded transition-all opacity-0">
                                     <i class="fas fa-qrcode mr-1"></i> Scan
                                 </button>
                             </div>
